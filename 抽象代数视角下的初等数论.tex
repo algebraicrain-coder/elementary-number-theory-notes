@@ -1,0 +1,1553 @@
+% !TEX program = xelatex
+% 抽象代数视角下的初等数论讲义
+% 编译方式：xelatex（需编译两遍以生成目录与交叉引用）
+\documentclass[a4paper,11pt]{ctexart}
+
+% ---- 数学与符号 ----
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\allowdisplaybreaks
+\numberwithin{equation}{section}
+
+% ---- 页面布局 ----
+\usepackage[top=2.2cm,bottom=2.2cm,left=2.8cm,right=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---- 页眉页脚 ----
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\setlength{\headheight}{14.5pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\rightmark}
+\fancyfoot[C]{\thepage~/~\pageref{LastPage}}
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[C]{\thepage~/~\pageref{LastPage}}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+% ---- 颜色与超链接 ----
+\usepackage{xcolor}
+\usepackage[colorlinks=true, allcolors=blue!45!black]{hyperref}
+
+% ---- 列表 ----
+\usepackage{enumitem}
+
+% ---- 定理环境：编号跟随 section ----
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{proposition}[theorem]{命题}
+\newtheorem{corollary}[theorem]{推论}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{定义}
+\newtheorem{example}[theorem]{例}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{注}
+\newtheorem{exercise}{习题}[section]
+
+\renewcommand{\proofname}{证明}
+
+% ---- 自定义记号 ----
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Cc}{\mathbb{C}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\N}{\mathbb{N}}
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator{\Img}{Im}
+\newcommand{\leg}[2]{\left(\frac{#1}{#2}\right)}
+\newcommand{\Ga}{\mathbb{Z}[i]}
+\newcommand{\Gf}{\mathbb{Z}[\sqrt{-5}]}
+
+\title{\textbf{抽象代数视角下的初等数论}\\[0.4em]
+\large ——环、理想与群语言中的经典定理}
+\author{}
+\date{2026 年 9 月}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+%======================================================
+\section*{前言}
+\addcontentsline{toc}{section}{前言}
+
+初等数论的传统讲法，是从整除、带余除法、同余这些“数”的性质出发，逐个建立算术基本定理、中国剩余定理、欧拉--费马定理等结果。本讲义换一个角度：\textbf{把这一切放进环与群的语言中}。在这种视角下，许多看似孤立的事实显现出共同的代数根源：
+
+\begin{itemize}[itemsep=0.2em]
+  \item \textbf{素数与唯一分解}：算术基本定理（唯一析因定理）并非关于“数”的孤立事实，而是“$\Z$ 是欧几里得整环”这一代数性质的推论。逻辑链是
+  \[
+    \text{带余除法} \;\Longrightarrow\; \text{欧几里得整环} \;\Longrightarrow\; \text{主理想整环} \;\Longrightarrow\; \text{唯一分解整环}.
+  \]
+  同一条链也一次性给出了多项式环 $F[x]$ 与高斯整数 $\Ga$ 的唯一分解定理。
+  \item \textbf{最大公因数与 Bézout 恒等式}：$\gcd(a,b)$ 本质上是理想 $(a)+(b)$ 的生成元；Bézout 恒等式 $ax+by=d$ 不过是“$d$ 落在理想 $(a)+(b)$ 中”的翻译。
+  \item \textbf{同余}：就是商环 $\Z/n\Z$ 中的等式；中国剩余定理就是环论中“互素理想的积与交、商环与直积”的一般定理。
+  \item \textbf{欧拉--费马定理}：是群论中 Lagrange 定理对单位群 $(\Z/n\Z)^{\times}$ 的直接应用；模素数的原根存在性则是“有限域乘法群为循环群”这一纯代数事实。
+\end{itemize}
+
+这样组织的好处是双重的：一方面，数论中的每个定理都在代数中找到了“它为什么成立”的结构性解释；另一方面，同一个代数定理自动适用于 $\Z$ 之外的整环（$F[x]$、$\Ga$ 等），使数论的许多经典难题（如二平方和定理）获得出乎意料的简短证明。
+
+\paragraph{预备知识。}线性代数基础；对“群”的定义有初步印象即可——第五章开头会补齐所需的群论内容（子群、陪集、Lagrange 定理）。环论从第二章讲起，不假定任何先修抽象代数。
+
+\paragraph{记号约定。}$\N=\{1,2,3,\dots\}$，$\Z$ 整数环，$\Q$、$\R$、$\Cc$ 为有理数、实数、复数域，$\F_p=\Z/p\Z$ 为 $p$ 元域。$(a_1,\dots,a_k)$ 表示由 $a_1,\dots,a_k$ 生成的理想。$p^k \parallel n$ 表示 $p^k \mid n$ 且 $p^{k+1}\nmid n$。$\varphi$ 为 Euler 函数，$\ord_n(a)$ 为 $a$ 模 $n$ 的乘法阶，$\leg{a}{p}$ 为 Legendre 符号。除特别说明外，“环”指含幺交换环，“整环”指无零因子的非零交换环，理想均指双边理想。
+
+\paragraph{如何使用本讲义。}第二、三、四章是主干（唯一分解定理的代数证明），第五章起进入群论应用；第六至八章为三组相互独立的应用专题，可按兴趣选读。每章末附习题，难度以 \textbf{加粗} 标注者为挑战题。章末“注”中穿插历史与延伸性评论。
+
+\newpage
+
+%======================================================
+\section{引言：从整除到理想}
+
+我们先快速回顾初等数论的标准语言，然后把它的每个概念翻译成代数语言——这张“对照表”将贯穿全篇。
+
+\subsection{传统语言}
+
+在初等数论中，我们反复使用以下事实：
+\begin{enumerate}[itemsep=0.1em]
+  \item （带余除法）对整数 $a,b$（$b\neq 0$），存在唯一的 $q,r$ 使 $a=qb+r$，$0\le r<|b|$；
+  \item （Bézout 恒等式）$\gcd(a,b)=d$ 可写成 $d=ax+by$；
+  \item （Euclid 引理）若素数 $p\mid ab$，则 $p\mid a$ 或 $p\mid b$；
+  \item （算术基本定理 / 唯一析因定理）每个大于 $1$ 的整数唯一地分解为素数之积；
+  \item （中国剩余定理）两两互素的模可独立处理；
+  \item （Euler--Fermat）$a^{\varphi(n)}\equiv 1 \pmod n$（$\gcd(a,n)=1$）。
+\end{enumerate}
+
+\subsection{代数翻译}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{ll}
+\hline
+初等数论 & 抽象代数 \\
+\hline
+整除 $b \mid a$ & $a \in (b)$，即 $a$ 属于 $b$ 生成的主理想 \\
+$a \equiv b \pmod n$ & $a-b\in (n)$，即 $\bar a=\bar b\in \Z/n\Z$ \\
+$\gcd(a,b)$ & 理想 $(a)+(b)$ 的（唯一正）生成元 \\
+Bézout 恒等式 & $d\in (a)+(b)$ \\
+素数 & 不可约元 / 素元（在 $\Z$ 中二者一致） \\
+算术基本定理 & $\Z$ 是唯一分解整环（UFD） \\
+同余类运算 & 商环 $\Z/n\Z$ \\
+中国剩余定理 & 互素理想：$\Z/(mn)\cong \Z/m\Z\times\Z/n\Z$ \\
+Euler--Fermat 定理 & Lagrange 定理应用于单位群 $(\Z/n\Z)^\times$ \\
+模 $p$ 的原根 & $(\Z/p\Z)^\times$ 是循环群 \\
+\hline
+\end{tabular}
+\end{center}
+
+这张表不是简单的改写：每一种代数化的概念都自动脱离了 $\Z$ 的特殊性，从而可以应用于 $F[x]$（多项式）、$\Ga$（高斯整数）等对象。第三章将证明：只要一个整环中带余除法成立（欧几里得整环），整条唯一分解的理论便自动成立。这正是本讲义的中心思想。
+
+\newpage
+
+%======================================================
+\section{环、理想与商环}
+
+本节建立基本语言。熟悉的读者可快速浏览，但请留意\textbf{例~\ref{ex:2xideal}}（$\Z[x]$ 中非主理想的例子）与\textbf{命题~\ref{prop:finitedomain}}（有限整环是域），它们在后文均有应用。
+
+\subsection{环与整环}
+
+\begin{definition}[环]\label{def:ring}
+设 $R$ 是一个非空集合，其上定义加法 $+$ 与乘法 $\cdot$。若：
+\begin{enumerate}[itemsep=0.1em]
+  \item $(R,+)$ 是交换群（其单位元记作 $0$）；
+  \item 乘法满足结合律与交换律，且有单位元 $1\neq 0$；
+  \item 分配律成立：$a(b+c)=ab+ac$，
+\end{enumerate}
+则称 $R$ 是一个\textbf{环}。本讲义中的“环”均指上述交换含幺环。
+\end{definition}
+
+\begin{example}\label{ex:rings}
+以下诸环是全篇的主角：
+\begin{enumerate}[itemsep=0.1em]
+  \item 整数环 $\Z$；
+  \item 域 $F$ 上的多项式环 $F[x]$；
+  \item 高斯整数环 $\Ga=\{a+bi : a,b\in\Z\}\subset\Cc$；
+  \item 剩余类环 $\Z/n\Z$（\S\ref{sec:quotient}）；
+  \item 二次整数环 $\Z[\sqrt{d}]=\{a+b\sqrt d : a,b\in\Z\}$，特别地 $\Gf$（将看到它\textbf{不是}唯一分解整环）。
+\end{enumerate}
+\end{example}
+
+\begin{definition}[零因子、整环、域]\label{def:domain}
+设 $R$ 是环，$a\in R$，$a\neq 0$。若存在 $b\neq 0$ 使 $ab=0$，则称 $a$ 为\textbf{零因子}。无零因子的（非零）交换环称为\textbf{整环}。若 $R$ 中每个非零元 $a$ 都有乘法逆元 $a^{-1}$，则称 $R$ 为\textbf{域}。
+\end{definition}
+
+显然域都是整环（$ab=0$ 且 $a\neq 0$ 时 $b=a^{-1}\cdot 0=0$）。反之不真：$\Z$ 是整环但非域。
+
+\begin{proposition}[有限整环是域]\label{prop:finitedomain}
+有限整环必为域。
+\end{proposition}
+
+\begin{proof}
+设 $R$ 是有限整环，$a\in R$，$a\neq 0$。考虑映射
+\[
+\mu_a\colon R\to R,\qquad x\mapsto ax .
+\]
+由 $ax=ay$ 得 $a(x-y)=0$；因 $R$ 无零因子且 $a\neq 0$，得 $x=y$，故 $\mu_a$ 单射。$R$ 有限，单射即满射，故存在 $x$ 使 $ax=1$，即 $a$ 可逆。
+\end{proof}
+
+\subsection{理想}
+
+环论中取代“整除”的核心概念是理想。其直观是：\textbf{理想是“可以被其中元素整除”的那些元素构成的集合}。
+
+\begin{definition}[理想]\label{def:ideal}
+环 $R$ 的子集 $I\subseteq R$ 称为\textbf{理想}，若：
+\begin{enumerate}[itemsep=0.1em]
+  \item $(I,+)$ 是 $(R,+)$ 的子群；
+  \item 对任意 $r\in R$、$a\in I$，有 $ra\in I$（吸收性）。
+\end{enumerate}
+记 $R$ 自身为 $R$，$\{0\}$ 为 $(0)$。设 $a_1,\dots,a_k\in R$，规定
+\[
+(a_1,\dots,a_k)=\{r_1a_1+\cdots+r_ka_k : r_i\in R\},
+\]
+这是包含 $a_1,\dots,a_k$ 的最小理想，称为由 $a_1,\dots,a_k$ \textbf{生成}的理想。特别地 $(a)=aR=\{ra:r\in R\}$ 称为\textbf{主理想}。若 $R$ 的每个理想都是主理想，则称 $R$ 为\textbf{主理想整环}（principal ideal domain，PID）。
+\end{definition}
+
+\begin{example}\label{ex:ideals}
+\begin{enumerate}[itemsep=0.1em]
+  \item 在 $\Z$ 中，$(n)=n\Z=\{\,nk : k\in\Z\,\}$ 即 $n$ 的全部倍数。注意 $(n)=(-n)$，且 $(1)=\Z$、$(0)=\{0\}$。
+  \item 在 $F[x]$ 中，$(f)$ 是 $f$ 的全部倍式。
+  \item 在 $\Ga$ 中，$(2,1+i)$ 是形如 $2\alpha+(1+i)\beta$ 的元素构成的理想（后文将算出它等于 $(1+i)$）。
+\end{enumerate}
+\end{example}
+
+理想与整除的关系如下，这是全篇最基本的“词典条目”。
+
+\begin{proposition}\label{prop:divideal}
+设 $R$ 为整环，$a,b\in R$。则
+\[
+b\mid a \iff a\in (b) \iff (a)\subseteq (b),
+\]
+且 $a$ 与 $b$ \textbf{相伴}（即 $a=ub$，$u$ 为单位）$\iff (a)=(b)$。
+\end{proposition}
+
+\begin{proof}
+$b\mid a$ 即存在 $c$ 使 $a=cb$，即 $a\in(b)=bR$。而 $(a)\subseteq(b)$ 当且仅当每个 $a$ 的倍元都属于 $(b)$，即 $b\mid a$。若 $a=ub$（$u$ 为单位），则 $b=u^{-1}a$，故互相整除、理想相等；反之 $(a)=(b)$ 给出互相整除 $a=bc$, $b=ad$，于是 $a=adc$，由整环消去律（$a\neq 0$）得 $dc=1$，即 $d$（从而 $c$）是单位。
+\end{proof}
+
+\begin{example}[并非所有理想都是主理想]\label{ex:2xideal}
+在 $\Z[x]$ 中考虑理想 $I=(2,x)$。假设 $I=(f)$。一方面 $2\in(f)$，故 $f\mid 2$，于是 $f\in\{\pm1,\pm2\}$；另一方面 $x\in (f)$，故 $f \mid x$，于是 $f\in\{\pm1,\pm x\}$。二者只能 $f=\pm1$，即 $(f)=\Z[x]$。但 $1\notin I$：若 $1=2g(x)+xh(x)$，令 $x=0$ 得 $1=2g(0)$，与 $g(0)\in\Z$ 矛盾。故 $I$ 不是主理想，$\Z[x]$ 不是主理想整环。
+
+事实上 $I$ 是极大理想：映射 $\varphi\colon \Z[x]\to\F_2,\ f(x)\mapsto f(0)\bmod 2$ 是满的环同态，其核恰为 $I$，故 $\Z[x]/I\cong \F_2$ 是域（见下节）。
+\end{example}
+
+\begin{definition}[理想的运算]\label{def:idealops}
+对理想 $I,J\subseteq R$，定义
+\[
+I+J=\{a+b : a\in I,\ b\in J\},\qquad
+IJ=\Big\{\sum_{t} a_t b_t : a_t\in I,\ b_t\in J\Big\},\qquad
+I\cap J,
+\]
+它们都是理想，且分别是同时包含 $I$ 与 $J$ 的最小理想、包含于 $I\cap J$ 的最大“乘法型”理想、以及同时包含于 $I$ 与 $J$ 的最大理想。在 $\Z$ 中，$(a)+(b)=(\gcd(a,b))$，$(a)\cap(b)=(\lcm(a,b))$，$(a)(b)=(ab)$（最后两条在 \S\ref{sec:UFD} 中由唯一分解严格推出；第一条马上由 Bézout 严格推出）。
+\end{definition}
+
+\subsection{商环与同态}\label{sec:quotient}
+
+\begin{definition}[剩余类与商环]\label{def:quotientring}
+设 $R$ 是环，$I$ 是理想。对 $a,b\in R$ 规定
+\[
+a\equiv b \pmod I \iff a-b\in I .
+\]
+这是等价关系；$a$ 所在的等价类记作 $\bar a=a+I$。等价类全体记作 $R/I$，在其中规定
+\[
+\bar a+\bar b=\overline{a+b},\qquad \bar a\cdot\bar b=\overline{ab}.
+\]
+（良定性由理想的吸收性保证：若 $a\equiv a'$、$b\equiv b'$，则 $ab-a'b'=a(b-b')+(a-a')b'\in I$。）这样 $R/I$ 成为一个环，称为 $R$ \textbf{模理想 $I$ 的商环}。映射
+\[
+\pi\colon R\to R/I,\qquad a\mapsto \bar a
+\]
+是满的环同态，核 $\ker\pi=I$。
+\end{definition}
+
+\begin{example}
+取 $R=\Z$，$I=(n)$。此时 $a\equiv b \pmod{(n)}$ 正是通常的 $a\equiv b\pmod n$，商环 $\Z/(n)$ 就是\textbf{剩余类环}
+\[
+\Z/n\Z=\{\bar 0,\bar 1,\dots,\overline{n-1}\},
+\]
+其加法与乘法即“模 $n$ 的加法与乘法”。这是历史上第一个商环，也是本讲义最重要的例子，第四章专门研究它。
+\end{example}
+
+\begin{proposition}[第一同构定理]\label{prop:iso1}
+设 $\varphi\colon R\to S$ 是满的环同态，$\ker\varphi=I$。则
+\[
+R/I \;\xrightarrow{\ \sim\ }\; S,\qquad \bar a\mapsto \varphi(a)
+\]
+是环同构。此外，$S$ 的理想与 $R$ 中包含 $I$ 的理想之间有保持包含关系的双射（\textbf{对应定理}）：$J\mapsto \pi^{-1}(J)$。
+\end{proposition}
+
+\begin{proof}
+映射 $\bar a\mapsto\varphi(a)$ 的良定与单射等价于 $\varphi(a)=\varphi(b)\iff a-b\in I$，这正是核的定义；满射性来自 $\varphi$ 满。运算保持由 $\varphi$ 是同态立得。对应定理：对 $R$ 中包含 $I$ 的理想 $K$，$\pi(K)$ 是 $R/I$ 的理想；反之对 $R/I$ 的理想 $J$，$\pi^{-1}(J)$ 是 $R$ 中包含 $I$ 的理想；这两个构造互逆（用 $\varphi$ 满验证）。
+\end{proof}
+
+\begin{corollary}
+$\Z/n\Z$ 的理想与 $n$ 的正因子一一对应：$d\mid n$ 对应理想 $(d)/(n)$。
+\end{corollary}
+
+\begin{proof}
+由对应定理，$\Z/n\Z$ 的理想对应 $\Z$ 中包含 $(n)$ 的理想。而 $\Z$ 的理想都是主理想（第三章将给出标准证明；亦可直接用带余除法：若 $I\neq(0)$，取 $I$ 中绝对值最小的正元 $d$，对任意 $a\in I$ 作带余除法 $a=qd+r$，则 $r=a-qd\in I$ 且 $0\le r<d$，由最小性 $r=0$，故 $I=(d)$）。而 $(n)\subseteq (d)$ 当且仅当 $d\mid n$（命题~\ref{prop:divideal}）。
+\end{proof}
+
+\begin{remark}
+理想的概念由 Kummer、Dedekind 在 19 世纪中叶为挽救“唯一分解”而发明（见第九章后记）：单看元素，唯一分解会失效；单看理想，唯一性得以恢复。商环则是同态的“核的代数化”——记住本讲义的主线：\textbf{同余问题 = 商环中的计算问题}。
+\end{remark}
+
+\begin{exercise}\label{ex:2-1}
+证明：交换环 $R$ 是域当且仅当它的理想只有 $(0)$ 与 $R$。
+\end{exercise}
+
+\begin{exercise}\label{ex:2-2}
+用带余除法直接证明：$\Z$ 的每个理想都是主理想。（这是第三章“$\Z$ 是主理想整环”的雏形，这里不许引用第三章。）
+\end{exercise}
+
+\begin{exercise}\label{ex:2-3}
+在 $\Z/12\Z$ 中列出全部理想，并验证它们对应 $12$ 的因子 $1,2,3,4,6,12$。找出 $\Z/12\Z$ 的全部零因子。
+\end{exercise}
+
+\begin{exercise}\label{ex:2-4}
+证明：对 $a,b\in\Z$ 有 $(a)+(b)=(\gcd(a,b))$（设 $a,b$ 不全为零，$\gcd$ 取正值）。
+\end{exercise}
+
+\begin{exercise}\label{ex:2-5}
+设 $m,n>1$。证明环 $\Z/m\Z\times \Z/n\Z$ 不是整环。（由此可知中国剩余定理给出的同构一般不保持“整环性”——它是环同构，不是“数系”的同构。）
+\end{exercise}
+
+\begin{exercise}\label{ex:2-6}
+证明 $\Z[x]/(x)\cong\Z$，从而 $(x)$ 是 $\Z[x]$ 的素理想但不是极大理想。再证明：$n$ 为素数时 $(x,n)$ 是极大理想，$n$ 为合数时不是。
+\end{exercise}
+
+\newpage
+
+%======================================================
+\section{欧几里得整环与唯一分解定理}\label{sec:UFD}
+
+本章是全篇核心。我们将证明贯穿全篇的那条逻辑链：\textbf{带余除法 $\Rightarrow$ 每个理想都是主理想 $\Rightarrow$ 唯一分解}。先将最后一步所需的元素概念在一般整环中定义清楚。
+
+\subsection{单位、不可约元与素元}
+
+\begin{definition}[单位]\label{def:unit}
+整环 $R$ 中可逆元称为\textbf{单位}，单位全体记作 $R^{\times}$。$R$ 的单位构成交换群。
+\end{definition}
+
+\begin{example}
+$\Z^{\times}=\{\pm1\}$；$F[x]^{\times}=F^{\times}$（非零常数）；$\Ga^{\times}=\{\pm 1,\pm i\}$（因为 $N(a+bi)=a^2+b^2=1$ 只有这四组解，$N$ 的定义见第八章）；$(\Z/n\Z)^{\times}$ 将在第四章刻画。
+\end{example}
+
+\begin{definition}[不可约元与素元]\label{def:irredprime}
+设 $R$ 为整环，$p\in R$ 非零且非单位。
+\begin{enumerate}[itemsep=0.1em]
+  \item 若 $p=ab$ 蕴涵 $a$ 或 $b$ 是单位，则称 $p$ \textbf{不可约}。
+  \item 若 $p\mid ab$ 蕴涵 $p\mid a$ 或 $p\mid b$，则称 $p$ 为\textbf{素元}。
+\end{enumerate}
+\end{definition}
+
+\begin{proposition}\label{prop:primeirred}
+素元必不可约。
+\end{proposition}
+
+\begin{proof}
+设 $p$ 素元且 $p=ab$。则 $p\mid ab$，故不妨 $p\mid a$，写 $a=pc$。代入得 $p=pcb$，由整环消去律 $cb=1$，故 $b$ 是单位。
+\end{proof}
+
+\begin{example}[逆命题一般不成立]\label{ex:zs5}
+在 $\Gf=\{a+b\sqrt{-5}:a,b\in\Z\}$ 中定义范数 $N(a+b\sqrt{-5})=a^2+5b^2$，则 $N(\alpha\beta)=N(\alpha)N(\beta)$（直接展开验证），且 $N(\alpha)=1$ 当且仅当 $\alpha$ 是单位（此时 $\alpha=\pm1$）。
+
+考察分解
+\[
+6=2\cdot 3=(1+\sqrt{-5})(1-\sqrt{-5}).
+\]
+\textbf{$2$ 不可约}：若 $2=\alpha\beta$ 且 $\alpha,\beta$ 都非单位，则 $N(\alpha)N(\beta)=4$ 且 $N(\alpha),N(\beta)\ge 2$，只能是 $N(\alpha)=N(\beta)=2$；但 $a^2+5b^2=2$ 无整数解，矛盾。同理（范数分解为 $9$ 与 $6$，而 $a^2+5b^2=3$ 无解）\textbf{$3$ 与 $1\pm\sqrt{-5}$ 都不可约}。
+
+但它们都不是素元：$2\mid(1+\sqrt{-5})(1-\sqrt{-5})$，而若 $2\mid 1+\sqrt{-5}$，由 $2(c+d\sqrt{-5})=2c+2d\sqrt{-5}$ 知被 $2$ 整除的元素系数均为偶数，$1+\sqrt{-5}$ 不满足；$2\nmid 1-\sqrt{-5}$ 同理。
+\end{example}
+
+因此在一般整环中“不可约”弱于“素”。唯一分解的实质正在于二者重合；下面的定理说明，只要理想都是主理想，这件事就自动发生。
+
+\subsection{带余除法与主理想性}
+
+\begin{definition}[欧几里得整环]\label{def:ED}
+设 $R$ 是整环。若存在函数 $N\colon R\setminus\{0\}\to\Z_{\ge 0}$，使得对任意 $a,b\in R$（$b\neq 0$），存在 $q,r\in R$ 满足
+\[
+a=qb+r,\qquad r=0 \ \text{或}\ N(r)<N(b),
+\]
+则称 $R$ 为\textbf{欧几里得整环}（Euclidean domain，ED），$N$ 称为（一个）\textbf{欧几里得范数}。
+\end{definition}
+
+\begin{theorem}[$\Z$ 是欧几里得整环]\label{thm:Zed}
+取 $N(a)=|a|$，则 $\Z$ 是欧几里得整环。
+\end{theorem}
+
+\begin{proof}
+这就是带余除法（欧几里得除法）。只证存在性（唯一性对本章逻辑并非必需，但一并给出）。
+
+\emph{存在性。}不妨 $b>0$（否则对 $-b$ 应用结论并翻转 $q$ 的符号）。令
+\[
+S=\{a-qb : q\in\Z,\ a-qb\ge 0\}.
+\]
+当 $q$ 取足够小的负数时 $a-qb>0$，故 $S$ 非空。由自然数的良序原理，$S$ 有最小元 $r=a-q_0b$。断言 $r<b$：若 $r\ge b$，则 $r-b=a-(q_0+1)b\in S$ 且 $r-b<r$，与最小性矛盾。于是 $a=q_0b+r$，$0\le r<b$。
+
+\emph{唯一性。}设 $a=qb+r=q'b+r'$，则 $b\mid r-r'$ 且 $|r-r'|<b$，故 $r=r'$，进而 $(q-q')b=0$ 给出 $q=q'$。
+\end{proof}
+
+\begin{theorem}[欧几里得整环 $\Rightarrow$ 主理想整环]\label{thm:EDPID}
+欧几里得整环的每个理想都是主理想。
+\end{theorem}
+
+\begin{proof}
+设 $R$ 是欧几里得整环（范数 $N$），$I\subseteq R$ 是理想。若 $I=(0)$ 则已为主理想。否则非零元集 $I\setminus\{0\}$ 的范数取值于良序集 $\Z_{\ge0}$，故存在 $a\in I\setminus\{0\}$ 使 $N(a)$ 最小。
+
+对任意 $b\in I$：由带余除法，$b=qa+r$，其中 $r=0$ 或 $N(r)<N(a)$。但 $r=b-qa\in I$（$a,b\in I$，吸收性），故由 $N(a)$ 的最小性必有 $r=0$，即 $b\in(a)$。于是 $I\subseteq(a)$；反向包含由 $a\in I$ 与吸收性立得。故 $I=(a)$。
+\end{proof}
+
+\begin{corollary}[Bézout 恒等式的代数形态]\label{cor:bezout}
+设 $a,b\in\Z$ 不全为零，令理想 $(a)+(b)=(d)$，其中 $d>0$。则：
+\begin{enumerate}[itemsep=0.1em]
+  \item $d\mid a$，$d\mid b$，且任何同时整除 $a,b$ 的 $c$ 必整除 $d$：即 $d=\gcd(a,b)$；
+  \item 存在 $x,y\in\Z$ 使 $ax+by=d$。
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+(1) $a,b\in(a)+(b)=(d)$ 给出 $d\mid a,b$。若 $c\mid a,b$，则 $(a)\subseteq(c)$，$(b)\subseteq(c)$，相加得 $(d)=(a)+(b)\subseteq(c)$，即 $d\in(c)$，故 $c\mid d$。
+
+(2) $d\in(a)+(b)$ 按定义即存在 $x,y$ 使 $d=ax+by$。
+\end{proof}
+
+\begin{remark}
+Bézout 恒等式在传统讲义中常由辗转相除法（Euclid 算法）的回代得到。理想语言的解释只有一句话：\textbf{最大公因数就是理想和 $(a)+(b)$ 的生成元}。“最大”的两种含义（整除意义下的最大、线性组合的最小正值）在此合二为一。
+\end{remark}
+
+\subsection{主理想整环中的唯一分解}
+
+先解决“分解存在性”。在一般整环中，元素可以不断分解下去而不终止（例如在有理数环中 $\tfrac12=(\tfrac12)^2\cdot 2$ 式的无聊现象；在真正的坏例中会有非平凡的无穷分解链）。主理想性排除了这一点。
+
+\begin{lemma}[主理想整环满足升链条件]\label{lem:ACC}
+设 $(a_1)\subseteq (a_2)\subseteq (a_3)\subseteq\cdots$ 是主理想整环 $R$ 中的理想升链，则存在 $N$ 使对一切 $i\ge N$ 有 $(a_i)=(a_N)$。
+\end{lemma}
+
+\begin{proof}
+令 $I=\bigcup_{i\ge1}(a_i)$。升链保证 $I$ 是理想（任意两元素落入同一个充分靠后的链节）。$R$ 是主理想整环，故 $I=(a)$，某 $a\in I$。由并集定义，$a\in (a_N)$ 对某个 $N$ 成立，于是
+\[
+(a)\subseteq (a_N)\subseteq I=(a),
+\]
+故 $I=(a_N)$，从而对 $i\ge N$ 有 $(a_N)\subseteq (a_i)\subseteq I=(a_N)$，即全部相等。
+\end{proof}
+
+注意 $(a_i)\subseteq(a_{i+1})$ 等价于 $a_{i+1}\mid a_i$：\textbf{引理~\ref{lem:ACC} 是说因子链 $a_1 \leftarrow a_2\leftarrow a_3\leftarrow\cdots$（真因子）必然终止}。
+
+\begin{lemma}[分解的存在性]\label{lem:existfactor}
+设整环 $R$ 满足因子链条件（真因子链必终止），则每个非零非单位元都是有限个不可约元之积。
+\end{lemma}
+
+\begin{proof}
+反设某个非零非单位元 $a$ 不能写成有限个不可约元之积。则 $a$ 自身不可约当且仅当矛盾，故 $a$ 可约：$a=a_1b_1$，$a_1,b_1$ 均非单位。若 $a_1,b_1$ 都可写成不可约元之积，则 $a$ 也可以，矛盾；故不妨 $a_1$ 不可写成不可约元之积。对 $a_1$ 重复同样的论证得 $a_1=a_2b_2$（$a_2,b_2$ 非单位，$a_2$ 仍不可写成不可约之积），如此继续，得到
+\[
+a=a_1b_1=a_2b_2b_1=a_3b_3b_2b_1=\cdots,
+\]
+从而 $(a)\subsetneq(a_1)\subsetneq(a_2)\subsetneq\cdots$ 是无穷真因子链（真性：若 $(a_i)=(a_{i+1})$，则如命题~\ref{prop:divideal} 的证明所示 $a_i\sim a_{i+1}$，结合 $a_i=a_{i+1}b_{i+1}$ 得 $b_{i+1}$ 是单位，矛盾）。这与因子链条件矛盾。
+\end{proof}
+
+再解决“唯一性”，关键是 Euclid 引理的代数形态。
+
+\begin{lemma}[主理想整环中不可约元生成极大理想]\label{lem:maxideal}
+设 $R$ 是主理想整环，$p\in R$ 不可约，则 $(p)$ 是极大理想，从而 $(p)$ 是素理想，从而 $p$ 是素元。
+\end{lemma}
+
+\begin{proof}
+设 $(p)\subseteq J\subseteq R$。$R$ 是主理想整环，故 $J=(a)$。由 $(p)\subseteq(a)$ 得 $p=ac$。$p$ 不可约，故 $a$ 是单位（此时 $J=(a)=R$）或 $c$ 是单位（此时 $a\sim p$，故 $J=(a)=(p)$，由命题~\ref{prop:divideal}）。因此 $(p)$ 极大。
+
+对含幺交换环 $R$ 与理想 $J$：$J$ 极大 $\iff R/J$ 除零理想与自身外没有其他理想 $\iff R/J$ 是域（习题~\ref{ex:2-1}）。于是 $R/(p)$ 是域，从而是整环；$\bar a\,\bar b=\bar 0$ 迫使 $\bar a=\bar 0$ 或 $\bar b=\bar 0$，即 $p\mid a$ 或 $p\mid b$：$p$ 是素元。
+\end{proof}
+
+\begin{theorem}[主理想整环是唯一分解整环]\label{thm:PIDUFD}
+设 $R$ 是主理想整环，则每个非零非单位元 $a$ 可写成
+\[
+a=u\,p_1p_2\cdots p_s\qquad (u\in R^{\times},\ p_i \text{ 不可约}),
+\]
+且若 $a=v\,q_1q_2\cdots q_t$ 是另一这样的分解，则 $s=t$，且可重排使 $p_i\sim q_i$（相伴，$i=1,\dots,s$）。
+\end{theorem}
+
+\begin{proof}
+存在性：主理想整环满足引理~\ref{lem:ACC}（注意 $(a_i)\subseteq(a_{i+1})\iff a_{i+1}\mid a_i$，故升链条件即“真因子链必终止”），由引理~\ref{lem:existfactor} 得分解存在。
+
+唯一性：对 $s$ 归纳。$s=1$ 时：$p_1=q_1\cdots q_t$。若 $t=0$ 则 $p_1$ 是单位，矛盾，故 $t\ge1$。$p_1$ 素（引理~\ref{lem:maxideal}），故 $p_1\mid q_j$ 对某个 $j$；重排使 $j=1$，写 $q_1=p_1u$（$u$ 是单位，因为 $q_1$ 不可约而 $p_1$ 非单位）。代入并消去 $p_1$ 得 $1=uq_2\cdots q_t$。若 $t\ge2$，则 $q_2\cdots q_t=u^{-1}$ 是单位，迫使其中某个 $q_i$ 是单位（非单位之积非单位），矛盾。故 $t=1$，$q_1\sim p_1$。
+
+$s\ge2$ 时：同上，$p_1$ 素给出 $q_1=p_1u_1$（重排后）。消去 $p_1$：
+\[
+p_2\cdots p_s = u_1 q_2\cdots q_t .
+\]
+右边是 $t-1$ 个不可约元之积（$u_1q_2$ 与 $q_2$ 相伴，相伴保持不可约性），左边是 $s-1$ 个。由归纳假设 $s-1=t-1$ 且重排后 $p_i\sim q_i$（$i\ge2$）。连同 $p_1\sim q_1$ 即得结论。
+\end{proof}
+
+\begin{remark}
+引理~\ref{lem:maxideal} 的最后一行正是\textbf{Euclid 引理}：在主理想整环中“不可约 $\Rightarrow$ 素”成立，于是“素元”与“不可约元”这两个概念合流。整数论的教科书把 Euclid 引理当作独立引理来证；代数的解释是：它是 $(p)$ 为极大理想这一结构事实的影子。
+\end{remark}
+
+\subsection{算术基本定理}
+
+把上述一般定理应用于 $\Z$，立即得到用户所提的那条路线：
+
+\begin{theorem}[唯一析因定理 / 算术基本定理]\label{thm:FToA}
+每个满足 $|n|\ge2$ 的整数 $n$ 可写成
+\[
+n=\pm\, p_1^{e_1}p_2^{e_2}\cdots p_k^{e_k},
+\]
+其中 $p_1<p_2<\cdots<p_k$ 为素数，$e_i\ge1$；且这种写法唯一（符号与诸 $e_i$ 均唯一确定）。
+\end{theorem}
+
+\begin{proof}
+$\Z$ 是欧几里得整环（定理~\ref{thm:Zed}），因而是主理想整环（定理~\ref{thm:EDPID}），因而是唯一分解整环（定理~\ref{thm:PIDUFD}）。$\Z$ 的不可约元恰为 $\pm p$（$p$ 素数）：若 $|m|\ge2$ 且 $m=ab$ 蕴涵 $|a|$ 或 $|b|$ 为 $1$。把每个 $\pm p_i$ 按 $p_i$ 归并、把单位 $\pm1$ 提出，即得所述标准形。
+\end{proof}
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{
+\textbf{逻辑链总览（$\Z$ 的情形）：}
+\begin{gather*}
+\text{带余除法}\ \Longrightarrow\ \text{欧几里得整环}\ \Longrightarrow\ \text{主理想整环}\\
+\Longrightarrow\ \text{唯一分解整环}
+\end{gather*}
+}}
+\end{center}
+
+\begin{remark}
+同样的三步在第八章将对 $\Ga$ 逐字重复（欧几里得范数换成 $N(a+bi)=a^2+b^2$），在第七章将对 $F[x]$ 逐字重复（范数换成次数）。一次证明，三处受益——这是抽象代数方法的全部力量所在。
+\end{remark}
+
+唯一分解立即给出 $\gcd$ 与 $\lcm$ 的显式刻画。记 $v_p(n)$ 为素数 $p$ 在 $n$ 中的幂次（即 $p^{v_p(n)}\parallel n$）。
+
+\begin{corollary}\label{cor:gcdlcm}
+对非零整数 $a,b$ 与任意素数 $p$：
+\[
+v_p(\gcd(a,b))=\min(v_p(a),v_p(b)),\qquad
+v_p(\lcm(a,b))=\max(v_p(a),v_p(b)),
+\]
+从而 $v_p(\gcd(a,b))+v_p(\lcm(a,b))=v_p(a)+v_p(b)$，特别地 $\gcd(a,b)\cdot\lcm(a,b)=|ab|$。
+\end{corollary}
+
+\begin{proof}
+唯一分解保证 $c\mid a$ 当且仅当对每个素数 $p$ 有 $v_p(c)\le v_p(a)$（标准形比较）。于是公因子的幂次受 $\min$ 限制、公倍数的幂次受 $\max$ 限制，逐素数取极值即得前两式；相加即得第三式。
+\end{proof}
+
+\begin{corollary}[素数无穷多]\label{cor:infprime}
+素数有无穷多个。
+\end{corollary}
+
+\begin{proof}
+反设素数仅 $p_1,\dots,p_k$。令 $n=p_1p_2\cdots p_k+1$。$n>1$ 非单位，由分解存在性（定理~\ref{thm:PIDUFD} 的存在性部分）它有不可约元因子；在 $\Z$ 中不可约元 $\Leftrightarrow$ 素元，故 $n$ 有素因子 $p$。由假设 $p=p_j$（某个 $j$），于是 $p_j\mid p_1\cdots p_k$ 且 $p_j\mid n$，得 $p_j\mid n-p_1\cdots p_k=1$，矛盾。
+\end{proof}
+
+\begin{example}[无理数的唯一分解证明]
+$\sqrt2$ 无理：设 $\sqrt2=a/b$（既约分数，即 $\gcd(a,b)=1$），则 $a^2=2b^2$，故 $2\mid a^2$。由 Euclid 引理（现在的引理~\ref{lem:maxideal}！）$2\mid a$，写 $a=2c$，则 $4c^2=2b^2$，$b^2=2c^2$，同理 $2\mid b$。这与 $\gcd(a,b)=1$ 矛盾。同一论证对任何素数 $p$ 给出 $\sqrt p$ 无理：关键一步 $p\mid a^2\Rightarrow p\mid a$ 恰是素元性质。
+\end{example}
+
+\begin{exercise}\label{ex:3-1}
+用辗转相除法求 $\gcd(2024,1008)$，并把它写成 $2024x+1008y$ 的形式。
+\end{exercise}
+
+\begin{exercise}\label{ex:3-2}
+证明：$\gcd(n,n+1)=1$，且 $\gcd(n,n+2)\in\{1,2\}$。
+\end{exercise}
+
+\begin{exercise}\label{ex:3-3}
+设 $p$ 为素数。证明：$p\mid n^2\Rightarrow p\mid n$；进而 $p\mid n^k\Rightarrow p\mid n$（$k\ge1$）。
+\end{exercise}
+
+\begin{exercise}\label{ex:3-4}
+用唯一分解证明：对素数 $p$，$\sqrt p\in\Q$ 不成立；并证明一般地：$n\in\N$ 不是完全平方数时 $\sqrt n\in\Q$ 不成立。
+\end{exercise}
+
+\begin{exercise}\label{ex:3-5}
+证明形如 $4k+3$ 的素数有无穷多个。（提示：设 $p_1,\dots,p_k$ 是全部 $4k+3$ 形素数，考察 $N=4p_1\cdots p_k-1\equiv 3\pmod 4$。注意：奇素数模 $4$ 只能是 $1$ 或 $3$，而若干个 $\equiv 1 \pmod 4$ 的数之积仍 $\equiv 1 \pmod 4$。）
+\end{exercise}
+
+\begin{exercise}\label{ex:3-6}
+补全例~\ref{ex:zs5} 中 $3$ 与 $1\pm\sqrt{-5}$ 不可约的证明细节。
+\end{exercise}
+
+\begin{exercise}\label{ex:3-7}
+设 $R$ 是整环。证明：相伴关系是等价关系；相伴于不可约元的元素仍不可约。
+\end{exercise}
+
+\begin{exercise}[\textbf{挑战}]\label{ex:3-8}
+证明：若整环 $R$ 的每个理想都是主理想，则 $R$ 满足因子链条件——\emph{不必}借助欧几里得范数。（即把引理~\ref{lem:ACC} 的叙述与证明改写为不依赖 $N$ 的形式；这正是“主理想 $\Rightarrow$ 唯一分解”完整独立于带余除法的要点。）
+\end{exercise}
+
+\newpage
+
+%======================================================
+\section{剩余类环 $\Z/n\Z$ 与中国剩余定理}\label{sec:zn}
+
+本章把同余彻底翻译成商环语言，并证明中国剩余定理的环论形态。
+
+\subsection{剩余类环的结构}
+
+回顾：$\Z/n\Z=\{\bar0,\bar1,\dots,\overline{n-1}\}$，运算为模 $n$ 加法与乘法（\S\ref{sec:quotient}）。作为加法群，它由 $\bar 1$ 生成，是 $n$ 阶循环群。
+
+先看它何时是“好”的环。
+
+\begin{theorem}\label{thm:zpzfield}
+设 $n\ge 2$。则
+\[
+\Z/n\Z \text{ 是域} \iff \Z/n\Z \text{ 是整环} \iff n \text{ 是素数}.
+\]
+\end{theorem}
+
+\begin{proof}
+域 $\Rightarrow$ 整环是一般的观察。整环 $\Rightarrow n$ 素：若 $n=ab$，$1<a,b<n$，则 $\bar a\bar b=\bar n=\bar 0$ 而 $\bar a,\bar b\neq\bar0$，出现零因子。$n$ 素 $\Rightarrow$ 域：设 $\bar a\neq\bar 0$，即 $n\nmid a$；$n$ 素且 $n\nmid a$ 给出 $\gcd(a,n)=1$，由 Bézout（推论~\ref{cor:bezout}）存在 $x,y$ 使 $ax+ny=1$，模 $n$ 得 $\bar a\,\bar x=\bar 1$。
+\end{proof}
+
+\begin{remark}
+由命题~\ref{prop:finitedomain}（有限整环是域），上述三个条件中“整环 $\Leftrightarrow$ 域”对有限环总是成立。记 $\F_p:=\Z/p\Z$（$p$ 素数），它是 $p$ 个元素的域。整条推理链是：素数 $\Rightarrow$ Bézout $\Rightarrow$ 可逆性 $\Rightarrow$ $\F_p$ 是域——每一步都是第三章理论的直接兑现。
+\end{remark}
+
+下面刻画单位群。记 $R^{\times}$ 为环 $R$ 的单位群；特别地 $(\Z/n\Z)^{\times}=\{\bar a: \bar a\,\bar x=\bar1 \text{ 对某个 } \bar x\}$。
+
+\begin{theorem}\label{thm:units}
+对 $n\ge2$ 与整数 $a$：
+\[
+\bar a\in(\Z/n\Z)^{\times} \iff \gcd(a,n)=1 .
+\]
+从而 $\varphi(n):=\big|(\Z/n\Z)^{\times}\big|=\#\{1\le a\le n : \gcd(a,n)=1\}$，即 Euler 函数。
+\end{theorem}
+
+\begin{proof}
+（$\Leftarrow$）$\gcd(a,n)=1$ 时由 Bézout 有 $ax+ny=1$，模 $n$ 得 $\bar a\bar x=\bar1$。（$\Rightarrow$）若 $\bar a\bar x=\bar1$，则 $ax+ny=1$ 对某个 $y$ 成立；$\gcd(a,n)$ 整除左边，故为 $1$。
+\end{proof}
+
+\begin{proposition}\label{prop:phipk}
+对素数 $p$ 与 $k\ge1$：$\varphi(p^k)=p^k-p^{k-1}=p^{k-1}(p-1)$。
+\end{proposition}
+
+\begin{proof}
+$(\Z/p^k\Z)^{\times}$ 由 $1\le a\le p^k$、$p\nmid a$ 的 $\bar a$ 组成（定理~\ref{thm:units}）。$1$ 到 $p^k$ 中 $p$ 的倍数恰有 $p^{k-1}$ 个，故计数为 $p^k-p^{k-1}$。
+\end{proof}
+
+\subsection{中国剩余定理}
+
+在环的语言中，“$m$ 与 $n$ 互素”被翻译为理想 $(m)+(n)=\Z$，这样的两个理想称为\textbf{互素理想}（comaximal）。
+
+\begin{theorem}[中国剩余定理，一般环形式]\label{thm:CRT}
+设 $R$ 是含幺交换环，$I,J$ 是理想且 $I+J=R$。则：
+\begin{enumerate}[itemsep=0.1em]
+  \item $IJ=I\cap J$；
+  \item 映射
+  \[
+  \Phi\colon R\longrightarrow R/I\times R/J,\qquad r\mapsto(r+I,\ r+J)
+  \]
+  是满的环同态，核为 $I\cap J$，从而
+  \[
+  R/(I\cap J)\;\cong\; R/I\times R/J .
+  \]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(1) 恒有 $IJ\subseteq I\cap J$（$ab\in I$ 因 $a\in I$，$ab\in J$ 因 $b\in J$）。反向：由 $I+J=R$ 取 $i\in I$、$j\in J$ 使 $i+j=1$。对 $x\in I\cap J$：
+\[
+x=x(i+j)=xi+xj .
+\]
+其中 $xi\in JI$（$x\in J$，$i\in I$），$xj\in IJ$；而 $IJ=JI$（交换环），故 $x\in IJ$。
+
+(2) $\Phi$ 显然是环同态，$\ker\Phi=\{r: r\in I,\ r\in J\}=I\cap J$。满射性：任取 $(a+I,\,b+J)$，令
+\[
+x=aj+bi \qquad (1=i+j,\ i\in I,\ j\in J).
+\]
+则
+\[
+x-a=aj+bi-a=a(j-1)+bi=-ai+bi=(b-a)i\in I,
+\]
+\[
+x-b=aj+bi-b=aj+b(i-1)=aj-bj=(a-b)j\in J.
+\]
+故 $\Phi(x)=(a+I,b+J)$。最后用第一同构定理（命题~\ref{prop:iso1}）。
+\end{proof}
+
+\begin{theorem}[中国剩余定理，经典形式]\label{thm:CRTZ}
+设 $\gcd(m,n)=1$。则对任意整数 $a,b$，同余方程组
+\[
+x\equiv a \pmod m,\qquad x\equiv b \pmod n
+\]
+模 $mn$ 有唯一解；等价地，
+\[
+\Z/mn\Z\;\cong\;\Z/m\Z\times\Z/n\Z .
+\]
+\end{theorem}
+
+\begin{proof}
+$\gcd(m,n)=1\iff (m)+(n)=\Z$（习题~\ref{ex:2-4} 与推论~\ref{cor:bezout}）。此时由定理~\ref{thm:CRT}，$\Z/(m)\cap(n)\cong\Z/(m)\times\Z/(n)$；再由 (1) 得 $(m)\cap(n)=(m)(n)=(mn)$。解的唯一性即映射 $\Phi$ 的单射性（核为零）。
+\end{proof}
+
+\begin{corollary}\label{cor:CRTn}
+设 $n=p_1^{k_1}\cdots p_r^{k_r}$。则
+\[
+\Z/n\Z\;\cong\;\prod_{i=1}^{r}\Z/p_i^{k_i}\Z,
+\qquad
+(\Z/n\Z)^{\times}\;\cong\;\prod_{i=1}^{r}(\Z/p_i^{k_i}\Z)^{\times},
+\qquad
+\varphi(n)=\prod_{i=1}^{r}p_i^{k_i-1}(p_i-1).
+\]
+\end{corollary}
+
+\begin{proof}
+对 $r$ 归纳应用定理~\ref{thm:CRTZ}（$(p_1^{k_1})$ 与 $(n/p_1^{k_1})$ 互素，因为二者除 $1$ 外无公共素因子）。单位群的同构来自：环同构把单位映到单位，且 $(R_1\times R_2)^{\times}=R_1^{\times}\times R_2^{\times}$。$\varphi$ 的公式由命题~\ref{prop:phipk} 与基数相乘得到。
+\end{proof}
+
+\begin{example}[《孙子算经》“物不知数”]\label{ex:sunzi}
+“今有物不知其数，三三数之剩二，五五数之剩三，七七数之剩二，问物几何？”即求
+\[
+x\equiv 2\ (3),\qquad x\equiv 3\ (5),\qquad x\equiv 2\ (7).
+\]
+模 $3,5,7$ 两两互素，$M=105$。按定理~\ref{thm:CRT} 的构造取“幂等元”：
+\[
+e_1=70=2\cdot5\cdot 7\equiv 1\ (3),\ \equiv 0\ (5),(7);\qquad
+e_2=21\equiv 1\ (5),\ \equiv0\ (3),(7);
+\]
+\[
+e_3=15\equiv 1\ (7),\ \equiv 0\ (3),(5).
+\]
+则 $x=2e_1+3e_2+2e_3=140+63+30=233\equiv 23 \pmod{105}$，最小正解为 $23$。程大位《算法统宗》的口诀“三人同行七十稀，五树梅花廿一支，七子团圆正半月，除百零五便得知”正是这三个幂等元 $70,21,15$。
+\end{example}
+
+\begin{example}
+求 $x^2\equiv 1 \pmod{45}$ 的全部解。由 $\Z/45\Z\cong\Z/9\Z\times\Z/5\Z$（中国剩余定理），原方程等价于
+\[
+x^2\equiv1\ (9),\qquad x^2\equiv1\ (5).
+\]
+模 $5$（域）：$(x-1)(x+1)\equiv0\ (5)$ 给出 $x\equiv\pm1\ (5)$。模 $9$：$3\mid(x-1)(x+1)$ 迫使 $3\mid x-1$ 或 $3\mid x+1$（Euclid 引理，$3$ 是素数）；若 $3\mid x-1$，写 $x=1+3t$，则 $x+1=2+3t$ 不被 $3$ 整除，故必须 $9\mid x-1$，即 $x\equiv1\ (9)$；同理另一支给出 $x\equiv-1\ (9)$。两组符号经 CRT 组合，得模 $45$ 的四个解：
+\[
+x\equiv 1,\ 19,\ 26,\ 44 \pmod{45}.
+\]
+（一般地，$x^2\equiv1\pmod n$ 的解数随 $n$ 的素因子个数增长，见习题~\ref{ex:4-6}。）
+\end{example}
+
+\begin{remark}
+中国剩余定理的环论形式（定理~\ref{thm:CRT}）不限于 $\Z$：对 $F[x]$ 的互素多项式 $f,g$，它给出 $F[x]/(fg)\cong F[x]/(f)\times F[x]/(g)$；对任意交换环同样成立。定理的核心只有一个：\textbf{互素理想允许把“联立约束”拆成“独立约束”}。第 (2) 部分证明中的 $x=aj+bi$ 是唯一的技巧性构造，值得记住。
+\end{remark}
+
+\begin{exercise}\label{ex:4-1}
+解同余方程组 $x\equiv1\ (4),\ x\equiv2\ (7),\ x\equiv3\ (9)$，求出模 $504$ 的唯一解。
+\end{exercise}
+
+\begin{exercise}\label{ex:4-2}
+计算 $\varphi(100)$、$\varphi(2025)$、$\varphi(10!)$。
+\end{exercise}
+
+\begin{exercise}\label{ex:4-3}
+证明 $\Z/n\Z$ 的理想一一对应于 $n$ 的正因子，并由此证明：$\Z/n\Z$ 是主理想整环当且仅当 $n$ 是素数幂。（提示：对应定理；$n$ 有两个不同素因子时找非主理想，或直接考察 $\Z/6\Z$。）
+\end{exercise}
+
+\begin{exercise}\label{ex:4-4}
+证明 $\varphi$ 是积性的：$\gcd(m,n)=1$ 时 $\varphi(mn)=\varphi(m)\varphi(n)$（不许直接引用推论~\ref{cor:CRTn}，而以定理~\ref{thm:CRT} 中单位群的对应为据重新证明）。
+\end{exercise}
+
+\begin{exercise}\label{ex:4-5}
+求 $x^2\equiv 1 \pmod{60}$ 的全部解。
+\end{exercise}
+
+\begin{exercise}[\textbf{挑战}]\label{ex:4-6}
+设 $n=2^{a}p_1^{k_1}\cdots p_r^{k_r}$（$p_i$ 为奇素数）。证明 $x^2\equiv1\pmod n$ 的解数为：
+$a=0$ 时 $2^{r}$；$a=1$ 时 $2^r$；$a=2$ 时 $2^{r+1}$；$a\ge3$ 时 $2^{r+2}$。（提示：先用 CRT 归到素数幂模，再对 $2^a$ 逐情形讨论：$a\ge3$ 时 $x\equiv\pm1,\ \pm(1+2^{a-1}) \pmod{2^a}$。）
+\end{exercise}
+
+\newpage
+
+%======================================================
+\section{单位群与指数同余}\label{sec:group}
+
+本章补齐所需群论，然后用 Lagrange 定理一次性导出 Euler--Fermat 定理、Wilson 定理与原根存在性。
+
+\subsection{群论速成}
+
+\begin{definition}[群与阶]\label{def:group}
+非空集合 $G$ 带二元运算 $\cdot$：结合律、有单位元 $e$、每个元素有逆元，则称 $G$ 为\textbf{群}；若还交换则称交换群（Abel 群）。$G$ 有限时元素个数 $|G|$ 称为群的阶。子集 $H\subseteq G$ 对运算封闭、含 $e$、含逆元时称为\textbf{子群}。元素 $g$ 生成的子群 $\langle g\rangle=\{g^k:k\in\Z\}$；若 $G=\langle g\rangle$ 则称 $G$ \textbf{循环群}，并称 $g$ 为生成元。使 $g^m=e$ 的最小正数 $m$ 称为 $g$ 的\textbf{阶}，记 $\ord(g)$（不存在时 $g$ 称为无限阶）。
+\end{definition}
+
+\begin{lemma}\label{lem:orderdivide}
+$g$ 的阶存在时，$g^k=e\iff \ord(g)\mid k$；且 $|\langle g\rangle|=\ord(g)$。
+\end{lemma}
+
+\begin{proof}
+带余除法：$k=q\cdot\ord(g)+r$，$0\le r<\ord(g)$，则 $g^k=(g^{\ord g})^qg^r=g^r$。由阶的最小性，$g^r=e\iff r=0$，即 $\ord(g)\mid k$。第二式：$g^i=g^j\iff g^{i-j}=e\iff \ord(g)\mid i-j$，故 $\langle g\rangle=\{e,g,\dots,g^{\ord(g)-1}\}$ 且两两不同。
+\end{proof}
+
+\begin{theorem}[Lagrange 定理]\label{thm:Lagrange}
+有限群 $G$、子群 $H$。定义关系 $g\sim g'\iff g^{-1}g'\in H$，则 $\sim$ 是等价关系，等价类（\textbf{左陪集}）形如 $gH=\{gh:h\in H\}$，每个陪集恰有 $|H|$ 个元素，且 $G$ 是不相交陪集之并。从而
+\[
+|G|=[G:H]\cdot|H|, \qquad [G:H]=\text{陪集个数},
+\]
+特别地 $|H|\bigm||G|$。进而每个元素的阶整除 $|G|$，且 $g^{|G|}=e$ 对一切 $g\in G$ 成立。
+\end{theorem}
+
+\begin{proof}
+$\sim$ 为等价关系直接验证（单位元、逆元、封闭性来自 $H$ 是子群）；$g$ 所在的等价类恰为 $gH$。映射 $H\to gH,\ h\mapsto gh$ 是双射（逆为 $x\mapsto g^{-1}x$），故 $|gH|=|H|$。不同陪集不相交（等价类），故 $|G|$ 是若干个 $|H|$ 之和。最后取 $H=\langle g\rangle$：$|\langle g\rangle|=\ord(g)\mid|G|$，且 $g^{|G|}=e$ 由引理~\ref{lem:orderdivide}。
+\end{proof}
+
+\subsection{Euler 定理与 Fermat 小定理}
+
+现在把 Lagrange 定理应用到单位群 $G=(\Z/n\Z)^{\times}$（这是有限交换群，$|G|=\varphi(n)$）。
+
+\begin{theorem}[Euler 定理]\label{thm:Euler}
+设 $n\ge2$，$\gcd(a,n)=1$。则
+\[
+a^{\varphi(n)}\equiv 1 \pmod n .
+\]
+\end{theorem}
+
+\begin{proof}
+$\bar a\in(\Z/n\Z)^{\times}$，由 Lagrange 定理（定理~\ref{thm:Lagrange} 末句）$\bar a^{\varphi(n)}=\bar 1$，即 $a^{\varphi(n)}\equiv1\pmod n$。
+\end{proof}
+
+\begin{corollary}[Fermat 小定理]\label{cor:Fermat}
+设 $p$ 为素数。
+\begin{enumerate}[itemsep=0.1em]
+  \item 若 $p\nmid a$，则 $a^{p-1}\equiv1\pmod p$；
+  \item 对任意整数 $a$：$a^{p}\equiv a \pmod p$。
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+(1) $\varphi(p)=p-1$（命题~\ref{prop:phipk}）。(2) $p\mid a$ 时两边 $\equiv0$；否则由 (1) 乘 $a$。
+\end{proof}
+
+\begin{proposition}[乘法阶]\label{prop:ord}
+设 $\gcd(a,n)=1$，$d=\ord_n(a)$（即使 $a^k\equiv1\pmod n$ 的最小正数 $k$）。则：
+\begin{enumerate}[itemsep=0.1em]
+  \item $d\mid\varphi(n)$，且对任意 $k$：$a^{k}\equiv1\pmod n\iff d\mid k$；
+  \item $\ord_n(a^k)=\dfrac{d}{\gcd(d,k)}$；
+  \item 若 $G=\langle g\rangle$ 是 $m$ 阶循环群，则 $g^k$ 的阶为 $m/\gcd(m,k)$，从而阶恰为 $e$ 的元素个数（$e\mid m$）为 $\varphi(e)$。
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(1) 即引理~\ref{lem:orderdivide} 应用到 $\bar a\in(\Z/n\Z)^{\times}$，配合 Lagrange。
+
+(2) 记 $e=\ord(a^k)$。$(a^k)^{e}=1\iff d\mid ke\iff \frac{d}{\gcd(d,k)}\bigm| e$（把 $d\mid ke$ 两边除以 $\gcd(d,k)$，利用 $\frac d{\gcd(d,k)}$ 与 $\frac k{\gcd(d,k)}$ 互素）。故 $e=\frac{d}{\gcd(d,k)}$。
+
+(3) 是 (2) 取 $d=m$ 的特例；元素 $g^k$ 的阶为 $e$ 当且仅当 $\gcd(m,k)=m/e$，即 $k=\frac me j$、$\gcd(e,j)=1$，这样的 $j\in\{1,\dots,e\}$ 恰有 $\varphi(e)$ 个。
+\end{proof}
+
+\begin{example}
+计算 $7^{2025}$ 的末两位数，即求 $7^{2025}\bmod 100$。$\varphi(100)=\varphi(4)\varphi(25)=2\cdot20=40$，与 $100$ 互素，可用 Euler：$2025=40\cdot50+25$，故只需 $7^{25}\bmod 100$。更省事地找阶：$7^2=49$，$7^4=49^2=2401\equiv1\pmod{100}$，故 $\ord_{100}(7)=4$，而 $2025=4\cdot506+1$，答案 $7$，即末两位 $07$。
+\end{example}
+
+\subsection{Wilson 定理}
+
+\begin{theorem}[Wilson]\label{thm:Wilson}
+设 $p$ 为素数，则 $(p-1)!\equiv -1 \pmod p$。
+\end{theorem}
+
+\begin{proof}
+$p=2$ 时 $(p-1)!=1\equiv-1\pmod 2$。设 $p$ 为奇素数，$G=\F_p^{\times}$。
+
+\emph{第一步：$G$ 中满足 $x^2=1$ 的元素恰为 $\pm1$。} $x^2=1$ 即 $(x-1)(x+1)=0$，域中无零因子，故 $x=\pm1$。（这是域性质；“模素数幂”时该步会失效，见习题~\ref{ex:4-6}。）
+
+\emph{第二步：配对。}对每个 $a\in G\setminus\{\pm1\}$，有 $a\neq a^{-1}$，即 $a$ 与其逆元不同。把 $G\setminus\{\pm1\}$ 按 $\{a,a^{-1}\}$ 配对，每对之积为 $1$。于是
+\[
+(p-1)!=\prod_{a\in G} a = 1\cdot(-1)\cdot\prod_{\text{对}} aa^{-1} \equiv -1 \pmod p .\qedhere
+\]
+\end{proof}
+
+\begin{proposition}[Wilson 定理的逆定理]\label{prop:Wilsonconv}
+设 $n\ge2$。若 $(n-1)!\equiv-1\pmod n$，则 $n$ 是素数。
+\end{proposition}
+
+\begin{proof}
+设 $n$ 为合数。若 $n=4$：$3!=6\equiv2\not\equiv-1\pmod 4$。设 $n\neq4$，写 $n=ab$，$1<a\le b<n$。
+若 $a<b$：$a,b$ 是 $1,\dots,n-1$ 中两个不同的数，故 $ab=n\mid (n-1)!$。
+若 $a=b$，即 $n=a^2$：由 $n\ne4$ 得 $a\ge3$，此时 $a$ 与 $2a$ 都落在 $\{1,\dots,a^2-1\}$ 中（$2a\le a^2-1\iff (a-1)^2\ge2$），且 $a\neq2a$，故 $a\cdot 2a=2n\mid (n-1)!$，特别 $n\mid(n-1)!$。
+两种情形都有 $(n-1)!\equiv0\not\equiv-1\pmod n$。
+\end{proof}
+
+\begin{remark}
+Wilson 定理由 Lagrange 首次证明（1771），命名来自 Wilson 的猜想。上面的证明是纯群论的：\textbf{乘积在配对下消去，只留下自逆元}。这一“配对消去”思想在代数中反复出现（如有限域中 $\prod_{a\in F_q^{\times}}a=-1$ 对任何有限域成立）。
+\end{remark}
+
+\subsection{模素数的原根：$(\Z/p\Z)^{\times}$ 是循环群}
+
+为证 $(\Z/p\Z)^{\times}$ 循环，需要一个关于有限交换群的引理。
+
+\begin{lemma}\label{lem:lcmorder}
+设 $G$ 是交换群，$a,b\in G$，$\ord(a)=r$，$\ord(b)=s$，且 $\gcd(r,s)=1$。则 $\ord(ab)=rs$。进而：存在 $c\in G$ 使 $\ord(c)=\lcm(r,s)$。
+\end{lemma}
+
+\begin{proof}
+先设 $\gcd(r,s)=1$。$(ab)^{rs}=a^{rs}b^{rs}=1$。反之若 $(ab)^k=1$，则 $a^k=b^{-k}$，左边的阶整除 $r$、右边的阶整除 $s$，故 $a^k$ 的阶同时整除互素的 $r$ 与 $s$，只能为 $1$，即 $a^k=1$、$b^k=1$，得 $r\mid k$、$s\mid k$，故 $rs\mid k$。于是 $\ord(ab)=rs$。
+
+一般情形：对每个素数 $q$，设 $q^{\alpha}\parallel r$、$q^{\beta}\parallel s$。取
+\[
+c_q=\begin{cases} a^{r/q^{\alpha}}, & \alpha\ge\beta,\\[0.2em] b^{s/q^{\beta}}, & \alpha<\beta,\end{cases}
+\qquad \ord(c_q)=q^{\max(\alpha,\beta)}
+\]
+（由命题~\ref{prop:ord}(2)）。令 $c=\prod_q c_q$；诸 $c_q$ 的阶两两互素且彼此交换，反复应用上一段得 $\ord(c)=\prod_q q^{\max(\alpha,\beta)}=\lcm(r,s)$。
+\end{proof}
+
+\begin{theorem}[$(\Z/p\Z)^{\times}$ 循环]\label{thm:primitive}
+设 $p$ 为素数，$G=\F_p^{\times}$。则 $G$ 是 $p-1$ 阶循环群。等价地，存在 $g$（\textbf{模 $p$ 的原根}）使 $G=\{g^0,g^1,\dots,g^{p-2}\}$。
+\end{theorem}
+
+\begin{proof}
+设 $m=\max\{\ord(a):a\in G\}$，取 $g$ 使 $\ord(g)=m$。
+
+\emph{断言：每个 $x\in G$ 满足 $x^{m}=1$。}由引理~\ref{lem:lcmorder}，存在 $c$ 使 $\ord(c)=\lcm(m,\ord(x))$；由 $m$ 的最大性 $\lcm(m,\ord(x))\le m$，而 $\lcm\ge m$，故 $\lcm(m,\ord(x))=m$，于是 $\ord(x)\mid m$，即 $x^m=1$。
+
+于是 $G$ 的全部 $p-1$ 个元素都是域上多项式 $f(X)=X^{m}-1\in\F_p[X]$ 的根。但次数为 $m$ 的非零多项式在域中至多有 $m$ 个根（对 $m$ 归纳：若 $f(\alpha)=0$，带余除法给 $f=(X-\alpha)q+f(\alpha)=(X-\alpha)q$，其余根是 $q$ 的根，$\deg q=m-1$）。故 $p-1\le m$。另一方面 $m=\ord(g)$ 整除 $|G|=p-1$（Lagrange）。故 $m=p-1$，即 $\ord(g)=p-1$，$G=\langle g\rangle$。
+\end{proof}
+
+\begin{corollary}\label{cor:countprim}
+对素数 $p$ 与 $d\mid p-1$，模 $p$ 的阶为 $d$ 的元素恰有 $\varphi(d)$ 个；特别地模 $p$ 的原根恰有 $\varphi(p-1)$ 个。
+\end{corollary}
+
+\begin{proof}
+由命题~\ref{prop:ord}(3) 取 $m=p-1$（原根 $g$ 存在）。
+\end{proof}
+
+\begin{example}
+$p=13$：$2^6=64\equiv-1\pmod{13}$，而 $\pm1$ 型检验排除更小的阶，故 $\ord_{13}(2)=12$，$2$ 是原根。由推论~\ref{cor:countprim}，模 $13$ 的原根共 $\varphi(12)=4$ 个：$2,6,7,11$。
+\end{example}
+
+\begin{remark}[更一般的循环性]
+定理~\ref{thm:primitive} 的证明只用了两个事实：$G$ 是有限交换群、其所在环境是域（多项式根的个数受次数控制）。因此它逐字适用于\textbf{任何有限域}的乘法群（第七章）。对一般的 $(\Z/n\Z)^{\times}$（$n$ 非素数幂时它不是域的单位群），Gauss 证明了：
+\[
+(\Z/n\Z)^{\times} \text{ 循环} \iff n\in\{1,2,4,p^k,2p^k\}\quad(p \text{ 奇素数}).
+\]
+其证明超出本讲义，但可由第八章习题中的单位群结构着手。注意 $\Z/8\Z$ 的情形：$(\Z/8\Z)^{\times}=\{1,3,5,7\}$ 中每个元素满足 $x^2\equiv1\pmod8$，最大阶仅 $2<\varphi(8)=4$，故模 $8$ 无原根——此时“多项式根数 $\le$ 次数”失效，因为 $\Z/8\Z$ 不是域（$X^2-1$ 在其中有 $4$ 个根！见习题~\ref{ex:4-6}）。
+\end{remark}
+
+\begin{remark}[离散对数与密码学]
+取定原根 $g$ 后，映射 $\Z/(p-1)\Z\to\F_p^{\times},\ k\mapsto g^k$ 是群同构，把乘法化为加法；$k=\log_g a$ 称为离散对数。当 $p$ 很大时，离散对数的计算被认为极其困难，这正是 Diffie--Hellman 密钥交换与 ElGamal 加密的数学基础。数论的这一章因密码学而重新活跃。
+\end{remark}
+
+\begin{exercise}\label{ex:5-1}
+计算 $2^{1000}\bmod 13$。
+\end{exercise}
+
+\begin{exercise}\label{ex:5-2}
+求 $\ord_7(3)$ 并验证 $3$ 是模 $7$ 的原根；列出模 $7$ 的全部原根。
+\end{exercise}
+
+\begin{exercise}\label{ex:5-3}
+利用 Wilson 定理计算 $26!\bmod 29$。（提示：$28!\equiv-1$，而 $28!\equiv 28\cdot27\cdot 26!\equiv(-1)(-2)\cdot26!$。）
+\end{exercise}
+
+\begin{exercise}\label{ex:5-4}
+证明：$(\Z/21\Z)^{\times}\cong(\Z/3\Z)^{\times}\times(\Z/7\Z)^{\times}\cong \Z/2\Z\times\Z/6\Z$，并求出其中每个元素的阶。
+\end{exercise}
+
+\begin{exercise}\label{ex:5-5}
+对奇数 $x$ 与 $k\ge3$，证明 $x^{2^{k-2}}\equiv 1\pmod{2^k}$。（对 $k$ 归纳：$(2t+1)^2=4t(t+1)+1$ 且 $8\mid 2t(t+1)$。由此推出模 $2^k$（$k\ge3$）没有原根。）
+\end{exercise}
+
+\begin{exercise}\label{ex:5-6}
+设 $p$ 为素数，$p\mid F_m=2^{2^m}+1$。证明 $\ord_p(2)=2^{m+1}$，从而 $p\equiv1\pmod{2^{m+1}}$；由此证明 Fermat 数 $F_0,F_1,F_2,\dots$ 两两互素。
+\end{exercise}
+
+\begin{exercise}[\textbf{挑战}]\label{ex:5-7}
+证明 $641\mid 2^{32}+1$。（提示：$641=5\cdot2^7+1$ 与 $641=5^4+2^4$；前者给出 $5^4 2^{28}\equiv 1\pmod{641}$，后者给出 $5^4\equiv-2^4$。这是 Euler 在 1732 年推翻 Fermat“所有 $F_m$ 为素数”猜想的计算，用同余语言只需三行。）
+\end{exercise}
+
+\newpage
+
+%======================================================
+\section{二次剩余与勒让德符号}\label{sec:QR}
+
+域 $\F_p$ 的乘法群是循环群（定理~\ref{thm:primitive}）——这一事实把“二次剩余”问题变成循环群中“平方映射”的结构问题。
+
+\subsection{平方映射与 Euler 判据}
+
+设 $p$ 为奇素数，$G=\F_p^{\times}$，$g$ 为原根。平方映射 $\sigma\colon G\to G,\ a\mapsto a^2$ 是群同态，像为子群 $\langle g^2\rangle=\{g^{2j}\}$，核为 $\{1,-1\}$（$2$ 阶），故
+\[
+|\Img\sigma|=\frac{p-1}{2},
+\]
+即\textbf{模 $p$ 的二次剩余恰有 $(p-1)/2$ 个}，且 $a$ 是二次剩余当且仅当 $a=g^{k}$、$k$ 为偶数。
+
+\begin{theorem}[Euler 判据]\label{thm:Eulercrit}
+设 $p$ 为奇素数，$p\nmid a$。则
+\[
+a^{\frac{p-1}{2}}\equiv
+\begin{cases}
+\ \ 1 \pmod p, & a \text{ 是模 } p \text{ 的二次剩余},\\
+\ -1 \pmod p, & \text{否则}.
+\end{cases}
+\]
+\end{theorem}
+
+\begin{proof}
+写 $a=g^k$。则
+\[
+a^{\frac{p-1}{2}}=g^{\frac{k(p-1)}2}=\bigl(g^{\frac{p-1}{2}}\bigr)^{k}.
+\]
+$g^{\frac{p-1}{2}}$ 的阶为 $\dfrac{p-1}{\gcd(p-1,\frac{p-1}2)}=2$，而 $\F_p^{\times}$ 中唯一的 $2$ 阶元是 $-1$（$x^2=1\Rightarrow x=\pm1$），故 $g^{\frac{p-1}2}=-1$。于是 $a^{\frac{p-1}2}=(-1)^k$，而 $a$ 是二次剩余 $\iff k$ 偶。
+\end{proof}
+
+\begin{definition}[Legendre 符号]\label{def:Legendre}
+设 $p$ 为奇素数。对整数 $a$ 定义
+\[
+\leg{a}{p}=\begin{cases}
+\ \ 1, & p\nmid a \text{ 且 } a \text{ 是模 } p \text{ 的二次剩余},\\
+-1, & p\nmid a \text{ 且 } a \text{ 不是二次剩余},\\
+\ \ 0, & p\mid a.
+\end{cases}
+\]
+\end{definition}
+
+\begin{proposition}[基本性质]\label{prop:legprop}
+对奇素数 $p$ 与整数 $a,b$：
+\begin{enumerate}[itemsep=0.1em]
+  \item $\leg{a}{p}\equiv a^{\frac{p-1}{2}}\pmod p$（Euler 判据，含 $p\mid a$ 情形）；
+  \item $\leg{ab}{p}=\leg{a}{p}\leg{b}{p}$；
+  \item $\leg{a^2}{p}=1$（$p\nmid a$）；$\leg{a}{p}=\leg{a \bmod p}{p}$；
+  \item 二次剩余与非剩余各恰有 $(p-1)/2$ 个（模 $p$ 意义下）。
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(1) $p\mid a$ 时两边为 $0$；否则即定理~\ref{thm:Eulercrit}。(2) 由 (1)（模 $p$ 的值只能是 $\pm1,0$，相等即相同）。(3)(4) 由平方映射 $\sigma$ 的核与像直接得出。
+\end{proof}
+
+\begin{corollary}[$-1$ 的判据]\label{cor:negone}
+设 $p$ 为奇素数。则
+\[
+\leg{-1}{p}=(-1)^{\frac{p-1}{2}}
+=\begin{cases}1,& p\equiv1\pmod4,\\ -1,& p\equiv3\pmod4.\end{cases}
+\]
+即：$x^2\equiv-1\pmod p$ 有解当且仅当 $p\equiv 1 \pmod 4$。
+\end{corollary}
+
+\begin{proof}
+代入 $a=-1$ 于 Euler 判据：$(-1)^{\frac{p-1}2}$ 按 $p\bmod 4$ 取值。
+\end{proof}
+
+这条不起眼的推论是第八章二平方和定理的引擎，请记住它。
+
+\subsection{Gauss 引理与 $\leg{2}{p}$}
+
+Euler 判据需要知道 $a^{\frac{p-1}2}$ 的值，通常不实用。Gauss 给出一个组合性的重述。
+
+\begin{lemma}[Gauss 引理]\label{lem:Gauss}
+设 $p$ 为奇素数，$p\nmid a$。考虑
+\[
+a,\ 2a,\ 3a,\ \dots,\ \tfrac{p-1}{2}a
+\]
+模 $p$ 的最小正剩余；设 $\mu$ 为其中大于 $p/2$ 的个数。则
+\[
+\leg{a}{p}=(-1)^{\mu}.
+\]
+\end{lemma}
+
+\begin{proof}
+记 $r_i$ 为 $ia$（$1\le i\le\frac{p-1}2$）的最小正剩余（属于 $\{1,\dots,p-1\}$）。它们两两不同：$r_i=r_j$ 给出 $p\mid(i-j)a$，而 $|i-j|<\frac p2$、$p\nmid a$，故 $i=j$。按大小分组：设恰有 $\mu$ 个满足 $r_i>\frac{p-1}2$，记它们为 $r_{i_1},\dots,r_{i_\mu}$，并令 $t_\nu=p-r_{i_\nu}\in\{1,\dots,\frac{p-1}2\}$；其余 $\frac{p-1}2-\mu$ 个记为 $s_1,\dots,s_{\frac{p-1}2-\mu}$（均 $\le\frac{p-1}2$）。
+
+\emph{断言：$\{t_1,\dots,t_\mu\}\cup\{s_1,\dots,s_{\frac{p-1}2-\mu}\}=\{1,2,\dots,\frac{p-1}2\}$，且两组不相交。}两组内部无重复（由 $r_i$ 两两不同）。跨组：若 $t_\nu=s_j$，即 $p-r_{i_\nu}=s_j$，则 $r_{i_\nu}+s_j=p$，即 $i_\nu a+ja\equiv0\pmod p$；但 $1\le i_\nu+j\le p-1$ 且 $p\nmid a$，矛盾。
+
+于是连乘：
+\[
+a^{\frac{p-1}{2}}\Bigl(\tfrac{p-1}{2}\Bigr)!\ \equiv\ \prod_{i=1}^{\frac{p-1}2} r_i
+\ =\ \prod_{\nu} r_{i_\nu}\prod_{j} s_j\
+\equiv\ (-1)^{\mu}\prod_{\nu} t_\nu\prod_{j} s_j\
+=\ (-1)^{\mu}\Bigl(\tfrac{p-1}{2}\Bigr)!\pmod p,
+\]
+最后一个等号用了断言中的集合等式。消去与 $p$ 互素的 $\bigl(\frac{p-1}2\bigr)!$，得 $a^{\frac{p-1}2}\equiv(-1)^{\mu}$；再由 Euler 判据（定理~\ref{thm:Eulercrit}）得 $\leg{a}{p}=(-1)^{\mu}$。
+\end{proof}
+
+\begin{corollary}\label{cor:two}
+设 $p$ 为奇素数，则
+\[
+\leg{2}{p}=(-1)^{\frac{p^2-1}{8}}
+=\begin{cases}\ \ 1,& p\equiv \pm1 \pmod 8,\\ -1,& p\equiv \pm3 \pmod 8.\end{cases}
+\]
+即 $2$ 是模 $p$ 的二次剩余当且仅当 $p\equiv \pm1 \pmod 8$。
+\end{corollary}
+
+\begin{proof}
+取 $a=2$：诸数 $2,4,\dots,(p-1)$ 中大于 $p/2$ 者为 $2k>p/2$ 即 $k>p/4$，$k\in\{\lfloor p/4\rfloor+1,\dots,\frac{p-1}2\}$，故 $\mu=\frac{p-1}2-\lfloor p/4\rfloor$。按 $p\bmod 8$ 逐一计算：$p=8m+1$：$\mu=4m-2m=2m$ 偶；$p=8m+3$：$\mu=4m+1-2m=2m+1$ 奇；$p=8m+5$：$\mu=4m+2-2m=2m+2$ 偶；$p=8m+7$：$\mu=4m+3-2m-1=2m+2$ 偶。与 $(-1)^{\frac{p^2-1}{8}}$ 的取值表一致（$\frac{p^2-1}{8}=\frac{(p-1)(p+1)}8$ 为偶恰当 $p\equiv\pm1\pmod8$）。
+\end{proof}
+
+\subsection{二次互反律}
+
+\begin{theorem}[二次互反律，Gauss]\label{thm:QR}
+设 $p,q$ 为互异的奇素数。则
+\[
+\leg{p}{q}\,\leg{q}{p}=(-1)^{\frac{p-1}{2}\cdot\frac{q-1}{2}},
+\]
+即：$\leg{p}{q}=\leg{q}{p}$，除非 $p\equiv q\equiv3\pmod 4$，此时 $\leg{p}{q}=-\leg{q}{p}$。
+\end{theorem}
+
+\begin{proof}[证明路线（Eisenstein 格点法）]
+完整证明见习题~\ref{ex:6-6} 的分步提示；思路是用 Gauss 引理把 $\leg{q}{p}$ 化为计数
+\[
+q,2q,\dots,\tfrac{p-1}2 q \pmod p
+\]
+中超过 $p/2$ 的个数，再把这个计数与矩形 $\{1\le x\le \frac{p-1}2,\ 1\le y\le\frac{q-1}2\}$ 内整点 $(x,y)$ 关于对角线 $y=\frac pq x$ 的分布比较，两个方向的不对称性恰好产生 $(-1)^{\frac{p-1}{2}\frac{q-1}{2}}$。
+\end{proof}
+
+\begin{example}
+计算 $\leg{5}{13}$。由互反律 $\leg{5}{13}=\leg{13}{5}=\leg{3}{5}$（指数 $\frac42\cdot\frac{12}2=12$ 偶），而模 $5$ 的剩余为 $\pm1$ 型：$\leg{3}{5}=\leg{5}{3}=\leg{2}{3}=-1$（由推论~\ref{cor:two}，$3\equiv3\pmod8$）。故 $5$ 不是模 $13$ 的二次剩余。直接验证：模 $13$ 的平方为 $1,4,9,3,12,10$，不含 $5$。
+\end{example}
+
+\begin{example}[用互反律计算 $\leg{3}{p}$]\label{ex:3leg}
+设 $p>3$ 为奇素数。互反律给出 $\leg{3}{p}=\leg{p}{3}\,(-1)^{\frac{p-1}{2}}$。按 $p\bmod 12$ 的四种取值列表：$p\equiv1$：$(\leg{p}{3},(-1)^{\frac{p-1}2})=(1,1)$；$p\equiv5$：$(-1,1)$；$p\equiv7$：$(1,-1)$；$p\equiv11$：$(-1,-1)$。故
+\[
+\leg{3}{p}=1\iff p\equiv\pm1\pmod{12}.
+\]
+\end{example}
+
+\begin{remark}
+二次互反律是 Gauss 称之为“黄金定理”的深刻结果，Gauss 先后给出过六个证明；代数数论把它解释为分圆域 $\Q(\zeta_p)$ 中素数分解规律的推论（Artin 符号、类域论的开端）。本讲义侧重结构性的 Euler 判据与 Gauss 引理；互反律本身则作为“超出本讲义范围的结构理论”的路标。
+\end{remark}
+
+\begin{exercise}\label{ex:6-1}
+列出模 $17$ 的全部二次剩余，并验证共 $(p-1)/2$ 个。
+\end{exercise}
+
+\begin{exercise}\label{ex:6-2}
+用 Euler 判据判断 $2$ 是否为模 $13$ 的二次剩余；再用推论~\ref{cor:two} 验证。
+\end{exercise}
+
+\begin{exercise}\label{ex:6-3}
+判断 $x^2\equiv 11\pmod{17}$ 是否有解（用互反律与推论~\ref{cor:two}）。
+\end{exercise}
+
+\begin{exercise}\label{ex:6-4}
+证明：对奇素数 $p$，$\leg{-2}{p}=1\iff p\equiv1,3\pmod8$。
+\end{exercise}
+
+\begin{exercise}\label{ex:6-5}
+证明 $x^2\equiv -1 \pmod p$（$p$ 奇素数）恰有两解当 $p\equiv1\pmod4$，无解当 $p\equiv3\pmod4$；并联系推论~\ref{cor:negone} 解释。
+\end{exercise}
+
+\begin{exercise}[\textbf{挑战}]\label{ex:6-6}
+按下列步骤完成二次互反律的 Eisenstein 证明。设 $p<q$ 为奇素数。
+\begin{enumerate}[itemsep=0.1em]
+  \item 沿用 Gauss 引理（引理~\ref{lem:Gauss}）证明中的记号，证明奇偶恒等式
+  \[
+  \sum_{k=1}^{\frac{p-1}{2}}(kq\bmod p)\;\equiv\;\mu-\frac{p^2-1}{8}\pmod 2
+  \]
+  （大于 $p/2$ 的剩余写成 $p-t_\nu$，小于者即 $s_j$；再用 $\{t_\nu\}\cup\{s_j\}=\{1,\dots,\frac{p-1}2\}$）。
+  \item 对 $kq=p\lfloor kq/p\rfloor+(kq\bmod p)$ 两端关于 $k$ 求和，结合上式证明
+  \[
+  \mu\;\equiv\;\sum_{k=1}^{\frac{p-1}2}\Big\lfloor\frac{kq}{p}\Big\rfloor\pmod 2
+  \]
+  （注意 $-p\equiv1\pmod2$，且 $q$ 为奇数使 $(q+1)\frac{p^2-1}8$ 为偶数）。
+  \item 证明 $\sum_k\lfloor kq/p\rfloor$ 恰为矩形 $\bigl(0,\frac p2\bigr)\times\bigl(0,\frac q2\bigr)$ 内对角线 $y=\frac qpx$ 下方的整点数；对称地 $\sum_{j=1}^{\frac{q-1}2}\lfloor jp/q\rfloor$ 为对角线上方的整点数；对角线上没有整点（因 $\gcd(p,q)=1$），故
+  \[
+  \sum_{k=1}^{\frac{p-1}2}\Big\lfloor\frac{kq}{p}\Big\rfloor+\sum_{j=1}^{\frac{q-1}2}\Big\lfloor\frac{jp}{q}\Big\rfloor=\frac{p-1}{2}\cdot\frac{q-1}{2}.
+  \]
+  \item 由 (2)(3) 与对称性得 $\leg{q}{p}\,\leg{p}{q}=(-1)^{\mu+\mu'}=(-1)^{\frac{p-1}2\cdot\frac{q-1}2}$。
+\end{enumerate}
+\end{exercise}
+
+\newpage
+
+%======================================================
+\section{多项式环 $F[x]$：$\Z$ 的镜像}\label{sec:Fx}
+
+数论的全部代数结构在系数取自域的多项式环中重演。本章平行地重述第三章，并给出几个商环构造的漂亮实例。
+
+\subsection{带余除法与欧几里得性}
+
+\begin{theorem}[域上多项式环中的带余除法]\label{thm:divFx}
+设 $F$ 是域，$f,g\in F[x]$，$g\neq0$。则存在唯一的 $q,r\in F[x]$ 使
+\[
+f=qg+r,\qquad r=0\ \text{或}\ \deg r<\deg g .
+\]
+\end{theorem}
+
+\begin{proof}
+存在性：对 $\deg f$ 归纳。若 $f=0$ 或 $\deg f<\deg g$，取 $q=0$，$r=f$。否则设 $f$ 首项为 $aX^m$、$g$ 首项为 $bX^n$（$m\ge n$），令
+\[
+f_1=f-\frac ab X^{m-n}g ,
+\]
+则 $f_1=0$ 或 $\deg f_1<m$；对 $f_1$ 用归纳假设 $f_1=q_1g+r_1$，合并得 $f=(\frac abX^{m-n}+q_1)g+r_1$。
+
+唯一性：若 $qg+r=q'g+r'$，则 $(q-q')g=r'-r$。若 $q\neq q'$，左边次数 $\ge\deg g$，而右边次数 $<\deg g$（约定 $\deg 0=-\infty$），矛盾。
+\end{proof}
+
+\begin{corollary}\label{cor:FxED}
+取 $N(f)=\deg f$（$f\neq0$），则 $F[x]$ 是欧几里得整环，从而是主理想整环，从而是唯一分解整环。
+\end{corollary}
+
+\begin{proof}
+带余除法即欧几里得性质；后两条分别由定理~\ref{thm:EDPID} 与定理~\ref{thm:PIDUFD}。注意 $F[x]$ 的单位群是 $F^{\times}$，其不可约元恰为不可约多项式，且素元与不可约元一致（引理~\ref{lem:maxideal}）。
+\end{proof}
+
+于是第三章的全部定理逐字翻译：$F[x]$ 中有 Bézout 恒等式 $\gcd(f,g)=uf+vg$；有唯一分解
+\[
+f=c\,p_1^{e_1}\cdots p_k^{e_k}\qquad (c\in F^{\times},\ p_i \text{ 首一不可约})；
+\]
+互素即 $(f)+(g)=F[x]$，中国剩余定理（定理~\ref{thm:CRT}）对多项式互素模同样成立。
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{ll}
+\hline
+$\Z$ & $F[x]$ \\
+\hline
+带余除法 $a=qb+r$, $0\le r<|b|$ & $f=qg+r$, $\deg r<\deg g$ \\
+欧几里得范数 $|a|$ & 次数 $\deg f$ \\
+单位 $\pm1$ & 非零常数 $F^{\times}$ \\
+素数 & 不可约多项式 \\
+Bézout / Euclid 引理 / 唯一分解 & 同左（定理~\ref{cor:FxED}） \\
+极大理想 $(p)$，$\Z/(p)=\F_p$ & 极大理想 $(f)$，$F[x]/(f)$ \\
+中国剩余定理 & 互素多项式版 \\
+原根 / 指数理论 & 有限域乘法群循环（下节） \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{商环 $F[x]/(f)$ 与域的构造}
+
+\begin{theorem}\label{thm:quotientFx}
+设 $F$ 是域，$f\in F[x]$ 非常数。则
+\[
+F[x]/(f) \text{ 是域} \iff f \text{ 不可约};\qquad
+F[x]/(f) \text{ 是整环} \iff f \text{ 不可约}.
+\]
+此时 $\dim_F F[x]/(f)=\deg f$，且商环中每个元素唯一地表示为
+\[
+\overline{c_0+c_1X+\cdots+c_{n-1}X^{n-1}},\qquad c_i\in F,\ n=\deg f .
+\]
+\end{theorem}
+
+\begin{proof}
+$F[x]$ 是主理想整环。若 $f$ 不可约，则 $(f)$ 是极大理想（引理~\ref{lem:maxideal} 的论证逐字适用），故商环是域。反之设商环是整环：若 $f$ 可约，写 $f=gh$，$g,h$ 非常数（非单位），则 $g,h\notin(f)$（否则 $f\mid g$，与 $\deg g<\deg f=\deg g+\deg h$ 矛盾），而 $\bar g\,\bar h=\bar f=\bar 0$，与整环性矛盾。故 $f$ 不可约，两个条件等价。
+
+表示的唯一性：由带余除法，每个 $f'\in F[x]$ 与其模 $f$ 的余数（次数 $<n=\deg f$ 或为零）同余，故商环的每个元素都有 $\overline{c_0+c_1X+\cdots+c_{n-1}X^{n-1}}$ 型代表元；若两个这样的多项式之差被 $f$ 整除而次数 $<n$，则必为零。于是商环作为 $F$-向量空间以 $1,\bar X,\dots,\bar X^{n-1}$ 为基，维数为 $n$。
+\end{proof}
+
+\begin{example}[$\Cc$ 就是商环]
+取 $F=\R$，$f=X^2+1$（在 $\R$ 上不可约：$X^2+1$ 无实根）。则
+\[
+\Cc \;\cong\; \R[X]/(X^2+1),\qquad i=\overline{X}.
+\]
+复数域的构造本身就是商环：$\overline{X}$ 的平方为 $\overline{X^2}=\overline{-1}$。商环构造“凭空造根”的能力由此可见。
+\end{example}
+
+\begin{example}[$\F_4$]
+$F=\F_2$，$f=X^2+X+1$：在 $\F_2$ 上 $f(0)=f(1)=1\neq0$，二次无根即不可约。故
+\[
+\F_4:=\F_2[X]/(X^2+X+1)=\{0,\ 1,\ \alpha,\ \alpha+1\},\qquad \alpha^2=\alpha+1,
+\]
+运算表如下（加法按 $\F_2$ 系数，乘法用 $\alpha^2=\alpha+1$）：
+\begin{center}
+\begin{tabular}{c|cccc}
+$\cdot$ & $0$ & $1$ & $\alpha$ & $\alpha+1$\\ \hline
+$0$ & $0$ & $0$ & $0$ & $0$ \\
+$1$ & $0$ & $1$ & $\alpha$ & $\alpha+1$ \\
+$\alpha$ & $0$ & $\alpha$ & $\alpha+1$ & $1$ \\
+$\alpha+1$ & $0$ & $\alpha+1$ & $1$ & $\alpha$ \\
+\end{tabular}
+\end{center}
+注意 $\alpha^3=\alpha(\alpha+1)=\alpha^2+\alpha=1$：$\F_4^{\times}=\langle\alpha\rangle$ 是 $3$ 阶循环群——定理~\ref{thm:primitive} 在 $q=4$ 的体现，且 $\alpha^3=1$ 正是 Fermat 小定理的有限域版本 $a^{q-1}=1$。
+\end{example}
+
+\begin{example}[$\F_9$]
+$X^2+1$ 在 $\F_3$ 上无根（$0^2+1=1$, $1^2+1=2$, $2^2+1=5\equiv2$），故不可约，$\F_9=\F_3[X]/(X^2+1)$ 是 $9$ 元域。这也说明 $-1$ 不是模 $3$ 的二次剩余，与推论~\ref{cor:negone}（$3\equiv3\pmod4$）一致。
+\end{example}
+
+\begin{proposition}[不可约多项式无穷多]\label{prop:infirred}
+对任何域 $F$，$F[x]$ 中存在无穷多个首一不可约多项式。
+\end{proposition}
+
+\begin{proof}
+若 $p_1,\dots,p_k$ 是全部首一不可约多项式，令 $f=p_1p_2\cdots p_k+1$（首一，次数 $\ge1$）。$f$ 有首一不可约因子 $p$；若 $p=p_j$，则 $p_j\mid f-p_1\cdots p_k=1$，矛盾。故 $p$ 是新的不可约多项式。
+\end{proof}
+
+\subsection{选读：有限域}
+
+\begin{proposition}[Frobenius 自同态]\label{prop:frob}
+设 $F$ 的特征为素数 $p$（即 $p\cdot1=0$，且最小）。则对 $a,b\in F$：
+\[
+(a+b)^p=a^p+b^p,\qquad (ab)^p=a^pb^p,
+\]
+且 $a\mapsto a^p$ 是 $F$ 到自身的单射环同态；$F$ 有限时是自同构。
+\end{proposition}
+
+\begin{proof}
+二项式展开：中间系数 $\binom{p}{k}=\frac{p(p-1)\cdots(p-k+1)}{k!}$ 对 $1\le k\le p-1$ 被 $p$ 整除（分子含因子 $p$ 而分母与 $p$ 互素），故中间项消失。乘法性与单射性（$a^p=0\Rightarrow a=0$；域无零因子故 $a^p=b^p\Rightarrow (a/b)^p=1\Rightarrow \dots$ 或直接：$a\mapsto a^p$ 的核是零理想）显然；有限单射即满射。
+\end{proof}
+
+\begin{theorem}[有限域的存在、唯一与结构]\label{thm:finfield}
+设 $p$ 为素数，$n\ge1$。
+\begin{enumerate}[itemsep=0.1em]
+  \item 任何有限域的特征是某素数 $p$，且其元素个数是 $p$ 的幂 $q=p^n$（它自然成为 $p^n$ 个元素的 $\F_p$-向量空间）。
+  \item 存在恰有 $p^n$ 个元素的域，且在同构意义下唯一；其元素恰为多项式 $X^{p^n}-X$ 的根，记作 $\F_{p^n}$。
+  \item $\F_{p^n}^{\times}$ 是 $p^n-1$ 阶循环群；对每个 $n$ 存在 $\F_p$ 上 $n$ 次首一不可约多项式。
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}[证明梗概]
+(1) 素子域 $\F_p\subseteq F$ 由 $\{0,1,1+1,\dots\}$ 生成；$F$ 是其上的有限维向量空间，基给出 $|F|=p^n$。
+
+(2) 取 $X^{p^n}-X$ 的分裂域（存在性可用 Kronecker 构造逐步添加根，无需 Zorn 引理）。由命题~\ref{prop:frob}，其根集对加、减、乘封闭；$a\neq0$ 时 $a^{p^n-1}=1$ 给出 $a^{-1}=a^{p^n-1}$，且 $(a^{-1})^{p^n}=a^{-1}$（两边同取 $p^n$ 次幂用 Frobenius），故根集对逆封闭，是一个 $p^n$ 个元素的域（互异性：$(X^{p^n}-X)'=p^nX^{p^n-1}-1=-1$ 与自身互素，无重根）。唯一性：$q=p^n$ 元域 $K$ 中每个元素满足 $a^q=a$（Lagrange 应用于 $K^{\times}$，加上 $0$），故 $K$ 恰为 $X^{p^n}-X$ 的根集，两个这样的域都是同一多项式在 $\F_p$ 上的分裂域，从而同构。
+
+(3) 循环性：定理~\ref{thm:primitive} 的证明只用了“$G$ 有限交换 + 环境是域”，逐字适用于 $\F_{p^n}^{\times}$。不可约多项式的存在：取 $\alpha$ 为 $\F_{p^n}^{\times}$ 的生成元，则 $\F_p(\alpha)\supseteq\{\alpha^k\}\cup\{0\}=\F_{p^n}$，故 $[\F_p(\alpha):\F_p]=n$，$\alpha$ 在 $\F_p$ 上的极小多项式次数为 $n$ 且不可约。
+\end{proof}
+
+\begin{remark}
+定理~\ref{thm:finfield}(2) 中“唯一性”与 (3) 的“不可约多项式存在”合起来，给出 $\F_p$ 上 $n$ 次首一不可约多项式个数的经典公式
+\[
+\#\{\text{首一 } n \text{ 次不可约}\}=\frac1n\sum_{d\mid n}\mu(d)\,p^{n/d}>0 ,
+\]
+其中 $\mu$ 为 Möbius 函数（把 $X^{p^n}-X$ 分解为各次数整除 $n$ 的不可约多项式之积并比较次数）。有限域理论是“数论 $\leftrightarrow$ 代数”互相滋养的最好例子之一：编码学、密码学（AES 的 $\F_{2^8}$）都建立在这一章之上。
+\end{remark}
+
+\begin{exercise}\label{ex:7-1}
+在 $\F_2[x]$ 中证明 $x^4+x^2+1=(x^2+x+1)^2$，并证明 $x^3+x+1$ 不可约；从而 $x^4+x^2+1$ 与 $x^3+x+1$ 互素。
+\end{exercise}
+
+\begin{exercise}\label{ex:7-2}
+在 $\F_2[x]$ 中分解 $x^5-1$；其因子 $x^4+x^3+x^2+x+1$ 是否不可约？
+\end{exercise}
+
+\begin{exercise}\label{ex:7-3}
+证明 $x^2+1$ 在 $\F_3[x]$ 中不可约，写出 $\F_9=\F_3[x]/(x^2+1)$ 的九个元素；求一个阶为 $8$ 的元素（即 $\F_9^{\times}$ 的生成元）。
+\end{exercise}
+
+\begin{exercise}\label{ex:7-4}
+证明：非常数多项式 $f\in F[x]$ 无重根（在某代数闭包中）当且仅当 $\gcd(f,f')=1$；由此证明 $x^{p^n}-x$ 无重根。
+\end{exercise}
+
+\begin{exercise}\label{ex:7-5}
+证明 $\Z[x]/(x^2+1)\cong\Z[i]$。（商环构造的“造根”能力不限于域系数；但注意 $\Z[x]$ 不是主理想整环，见例~\ref{ex:2xideal}。）
+\end{exercise}
+
+\begin{exercise}\label{ex:7-6}
+证明：$\F_p$ 上 $n$ 次首一不可约多项式的个数满足 $nN_n=\sum_{d\mid n}\mu(d)p^{n/d}$，并验证 $N_1=p$、$N_2=\frac{p^2-p}2$。
+\end{exercise}
+
+\newpage
+
+%======================================================
+\section{高斯整数 $\Ga$ 与二平方和定理}\label{sec:Gauss}
+
+本章是全篇方法的综合演出：用 $\Ga$ 的唯一分解性证明 Fermat 的二平方和定理。中间几乎用到此前所有章节。
+
+\subsection{$\Ga$ 是欧几里得整环}
+
+在 $\Ga=\{a+bi:a,b\in\Z\}$ 上定义\textbf{范数}
+\[
+N(\alpha)=N(a+bi)=a^2+b^2=\alpha\bar\alpha,
+\]
+其中 $\bar\alpha$ 为共轭。直接验证：
+
+\begin{lemma}\label{lem:normprops}
+\begin{enumerate}[itemsep=0.1em]
+  \item $N(\alpha\beta)=N(\alpha)N(\beta)$（由 $N(\alpha)=\alpha\bar\alpha$ 与 $\overline{\alpha\beta}=\bar\alpha\bar\beta$）；
+  \item $N(\alpha)\in\Z_{\ge0}$，且 $N(\alpha)=0\iff\alpha=0$；
+  \item $\alpha$ 是单位 $\iff N(\alpha)=1\iff\alpha\in\{\pm1,\pm i\}$；
+  \item $N(\alpha)=N(\bar\alpha)$；$\alpha\bar\alpha=N(\alpha)$ 是 $\alpha$ 在 $\Z$ 中的倍数。
+\end{enumerate}
+\end{lemma}
+
+\begin{theorem}[$\Ga$ 是欧几里得整环]\label{thm:GaussED}
+对 $\alpha,\beta\in\Ga$，$\beta\neq0$，存在 $\gamma,\rho\in\Ga$ 使
+\[
+\alpha=\gamma\beta+\rho,\qquad \rho=0 \ \text{或}\ N(\rho)<N(\beta).
+\]
+从而 $\Ga$ 是欧几里得整环 $\Rightarrow$ 主理想整环 $\Rightarrow$ 唯一分解整环。
+\end{theorem}
+
+\begin{proof}
+在 $\Q(i)$ 中计算 $\dfrac{\alpha}{\beta}=u+vi$（$u,v\in\Q$：分子分母同乘 $\bar\beta$）。取 $m,n\in\Z$ 分别最接近 $u,v$（误差 $\le\frac12$），令 $\gamma=m+ni$，$\rho=\alpha-\gamma\beta$。则
+\[
+N(\rho)=N(\beta)\cdot N\Bigl(\frac{\alpha}{\beta}-\gamma\Bigr)
+=N(\beta)\bigl((u-m)^2+(v-n)^2\bigr)\le N(\beta)\cdot\Bigl(\frac14+\frac14\Bigr)=\frac{N(\beta)}2<N(\beta).
+\]
+第二条链引用定理~\ref{thm:EDPID} 与定理~\ref{thm:PIDUFD}。
+\end{proof}
+
+\begin{example}
+求 $(11+3i)\div(3+i)$ 的带余除法。$\dfrac{11+3i}{3+i}=\dfrac{(11+3i)(3-i)}{10}=\dfrac{36-2i}{10}=3.6-0.2i$，取 $\gamma=4$，则 $\rho=11+3i-4(3+i)=-1-i$，$N(\rho)=2<N(3+i)=10$。故 $11+3i=4(3+i)+(-1-i)$。
+\end{example}
+
+\begin{example}
+带余除法在 $\Ga$ 中的\textbf{商与余数不唯一}：$\dfrac{3}{1+i}=1.5-1.5i$，取 $\gamma=1-i$ 得 $\rho=1$；取 $\gamma=2-i$ 得 $\rho=-i$。两种都满足 $N(\rho)=1<N(1+i)=2$。这不影响任何理论：欧几里得性质只要求余数“变小”。
+\end{example}
+
+\subsection{$\Ga$ 中的素元分类}
+
+\begin{theorem}[有理素数在 $\Ga$ 中的行为]\label{thm:gaussprime}
+设 $p$ 为有理素数。
+\begin{enumerate}[itemsep=0.1em]
+  \item $p=2$：$2=-i\,(1+i)^2$，$(1+i)$ 是高斯素元（范数 $2$）——\textbf{分歧}；
+  \item $p\equiv1\pmod4$：$p=\pi\bar\pi$，$\pi$ 为高斯素元，$N(\pi)=p$，分解在相伴意义下唯一——\textbf{分裂}；
+  \item $p\equiv3\pmod4$：$p$ 自身是高斯素元——\textbf{惰性}。
+\end{enumerate}
+一般地，高斯素元在相伴意义下恰为三类：$1+i$ 及其相伴；满足 $N(\pi)=p$ 的 $\pi=a\pm bi$（$p$ 为有理素数，必 $\equiv1\pmod4$）；以及有理素数 $p\equiv3\pmod4$（视作 $\Ga$ 的元素）。
+\end{theorem}
+
+\begin{proof}
+(3) 反设 $p=\alpha\beta$ 为非平凡分解（$\alpha,\beta$ 非单位），则 $N(\alpha)N(\beta)=N(p)=p^2$，只能 $N(\alpha)=N(\beta)=p$，即 $p=a^2+b^2$（$\alpha=a+bi$）。但 $p$ 为奇素数时 $a,b$ 一奇一偶，$a^2+b^2\equiv1\pmod4$，与 $p\equiv3\pmod4$ 矛盾。
+
+(2) $p\equiv1\pmod4$ 时，由推论~\ref{cor:negone} 存在 $a$ 使 $a^2\equiv-1\pmod p$，即 $p\mid(a+i)(a-i)$（在 $\Ga$ 中）。若 $p$ 是高斯素元，则 $p\mid a+i$ 或 $p\mid a-i$；但 $p\mid a+i$ 意味着 $a+i=p(c+di)$，比较虚部 $1=pd$，不可能。故 $p$ 不是高斯素元；$\Ga$ 是唯一分解整环，其中不可约 $\Leftrightarrow$ 素（引理~\ref{lem:maxideal}），故 $p=\alpha\beta$ 非平凡，于是 $N(\alpha)=N(\beta)=p$。写 $\pi=\alpha$：由 $N(\alpha)=p$ 为素数，$\pi$ 不可约（$\pi=\mu\nu\Rightarrow N(\mu)N(\nu)=p$ 迫使其一为单位），即高斯素元；$\beta=p/\pi=\pi\bar\pi/\pi=\bar\pi$（至多差单位）。唯一性来自唯一分解。
+
+(1) $2=(1+i)(1-i)=-i(1+i)^2$，而 $N(1+i)=2$ 为素数，故 $1+i$ 不可约。
+
+末句分类：非实非纯虚的高斯素元 $\pi$（$N(\pi)$ 非素数时）必为某有理素数 $p$ 的因子，逐情形归结于 (1)(2)(3)；细节留作习题~\ref{ex:8-3}。
+\end{proof}
+
+\begin{example}
+$5=(2+i)(2-i)$，$13=(3+2i)(3-2i)$，$17=(4+i)(4-i)$（均 $\equiv1\pmod4$）；$2=(1+i)^2\cdot(-i)$；$3,7,11,19$ 保持为高斯素数。反向：$N(2+i)=5$、$N(3+2i)=13$ 为素数，故这些是高斯素元。
+\end{example}
+
+\subsection{Fermat 二平方和定理}
+
+\begin{theorem}[Fermat 两素数平方和定理，1640]\label{thm:fermattwo}
+设 $p$ 为奇素数。则
+\[
+p=x^2+y^2\ \text{有整数解}\iff p\equiv1\pmod4 .
+\]
+\end{theorem}
+
+\begin{proof}
+（$\Leftarrow$）设 $p\equiv1\pmod4$。由推论~\ref{cor:negone} 取 $a$ 使 $a^2\equiv-1\pmod p$，于是 $p\mid(a+i)(a-i)$ 而 $p$ 整除两个因子都不可能（定理~\ref{thm:gaussprime}(2) 的论证），故 $p$ 不是高斯素元；由定理~\ref{thm:gaussprime}(2)（或直接重复其推理）$p=\pi\bar\pi$，$\pi=x+yi$，$N(\pi)=p$，即 $p=x^2+y^2$。
+
+（$\Rightarrow$）设 $p=x^2+y^2$ 为奇数。平方模 $4$ 只能是 $0$ 或 $1$；若 $x,y$ 同奇偶则 $p\equiv0$ 或 $2\pmod4$，均非奇素数；故一奇一偶，$p\equiv1\pmod4$。
+\end{proof}
+
+把两个平方和相乘仍是平方和——这不是巧合，而是范数乘法性（引理~\ref{lem:normprops}(1)）：
+
+\begin{corollary}[Brahmagupta--Fibonacci 恒等式]\label{cor:brahmagupta}
+\[
+(x^2+y^2)(u^2+v^2)=(xu\mp yv)^2+(xv\pm yu)^2 .
+\]
+\end{corollary}
+
+由此可以推广到一般整数。
+
+\begin{theorem}[二平方和定理]\label{thm:twosquares}
+设 $n\ge1$。则 $n=x^2+y^2$ 有整数解，当且仅当 $n$ 的标准分解中每个 $\equiv3\pmod4$ 的素数出现偶数次幂：
+\[
+n=2^{a}\prod_{p\equiv1(4)}p^{e_p}\ \cdot\ \Bigl(\prod_{q\equiv3(4)}q^{f_q}\Bigr)^{2}.
+\]
+\end{theorem}
+
+\begin{proof}
+（$\Leftarrow$）每个因子都是范数：$2^a=N\bigl((1+i)^a\bigr)$；$p\equiv1\pmod4$ 时 $p^e=N(\pi^e)$（$\pi$ 如定理~\ref{thm:gaussprime}(2)）；$q^{2f}=N(q^f)$。由范数乘法性，$n=N(\alpha)$ 对某个 $\alpha\in\Ga$ 成立，即 $n=x^2+y^2$。
+
+（$\Rightarrow$）反设 $q\equiv3\pmod4$ 且 $q^{2k+1}\parallel n$（$k\ge0$），$n=x^2+y^2$。则 $q\mid x^2+y^2$。若 $q\nmid y$，则 $y$ 模 $q$ 可逆，$(xy^{-1})^2\equiv-1\pmod q$，与推论~\ref{cor:negone}（$q\equiv3\pmod4$ 时 $-1$ 非剩余）矛盾；故 $q\mid y$，进而 $q\mid x$。写 $x=qx_1$、$y=qy_1$，得 $n/q^2=x_1^2+y_1^2$，且 $q$ 在其中的幂次仍为奇数 $2k-1$。如此反复（无穷递降），最终得到“$q\mid x^2+y^2$ 但 $q^2\nmid x^2+y^2$”的情形，已证不可能。故 $f_q$ 必为偶数。
+\end{proof}
+
+\begin{example}
+$2025=3^4\cdot5^2$：$3$ 的幂次 $4$ 为偶，故 $2025$ 是两平方和。事实上 $2025=27^2+36^2$（对应 $\alpha=9(3+4i)=27+36i$：$N(9)\cdot N(3+4i)=81\cdot25=2025$）。而 $21=3\cdot7$（两个 $\equiv3\pmod4$ 素数各一次）与 $7$ 都不是两平方和；$1105=5\cdot13\cdot17$ 是，且恰有四种本质写法：
+\[
+1105=33^2+4^2=32^2+9^2=31^2+12^2=24^2+23^2
+\]
+（把 $5,13,17$ 各自的两种分裂方式组合起来——范数语言让“计数写法”变成组合问题）。
+\end{example}
+
+\begin{remark}
+传统数论用 Fermat 的无穷递降直接在整数上证明定理~\ref{thm:fermattwo}，技巧性强。代数证明把问题翻译成：\textbf{$p$ 在 $\Ga$ 中是否还是素元}——分解律（$p\equiv1\pmod4$ 时分裂）由 Legendre 符号（Euler 判据）判定，唯一分解由欧几里得性保证。三步各司其职：判据（第六章）、结构（第三章）、计算（范数）。Dedekind 意义下的“分裂/惰性/分歧”术语也来自这里（定理~\ref{thm:gaussprime}），它是代数数论中素理想分解理论的雏形。
+\end{remark}
+
+\begin{exercise}\label{ex:8-1}
+计算 $N(3+4i)$，并把 $25$ 写成两平方和的所有方式；用高斯素数分解解释每一种。
+\end{exercise}
+
+\begin{exercise}\label{ex:8-2}
+判断 $7,11,2+3i,3+4i$ 哪些是高斯素元，并说明理由。
+\end{exercise}
+
+\begin{exercise}\label{ex:8-3}
+补全定理~\ref{thm:gaussprime} 末句的分类：证明若 $\pi=a+bi$（$a,b\neq0$）是高斯素元，则 $a^2+b^2$ 为有理素数（因而 $\equiv1\pmod4$）；并证明范数为有理素数平方的元素（相伴意义下）恰为有理素数 $p\equiv3\pmod4$。
+\end{exercise}
+
+\begin{exercise}\label{ex:8-4}
+在 $\Ga$ 中求 $7+i$ 除以 $2+i$ 的完全商与余数；并说明 $2+i$ 是否整除 $7+i$。
+\end{exercise}
+
+\begin{exercise}\label{ex:8-5}
+判断下列哪些数是两平方和，是者给出一种写法：$7,\ 21,\ 45,\ 65,\ 1105,\ 2025$。
+\end{exercise}
+
+\begin{exercise}\label{ex:8-6}
+证明：有理素数 $p$ 生成的理想 $(p)\subseteq\Ga$ 是素理想当且仅当 $p=2$ 或 $p\equiv3\pmod4$。
+\end{exercise}
+
+\begin{exercise}[\textbf{挑战}]\label{ex:8-7}
+在 $\Z[\sqrt2]=\{a+b\sqrt2\}$ 上定义范数 $N(a+b\sqrt2)=|a^2-2b^2|$。证明 $N$ 是乘法性的，且 $3+2\sqrt2$ 是单位。由此证明 Pell 方程 $x^2-2y^2=1$ 有无穷多组正整数解（考察 $(3+2\sqrt2)^n$ 的系数）。\emph{（更进阶：证明 $\Z[\sqrt2]$ 关于 $N$ 也是欧几里得整环。）}
+\end{exercise}
+
+\newpage
+
+%======================================================
+\section{结语：唯一性的边界与理想的诞生}\label{sec:conclusion}
+
+\subsection{方法总结}
+
+本讲义反复使用同一条逻辑链，在三个整环上各兑现一次：
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{lccc}
+\hline
+ & 带余除法（欧几里得范数） & 主理想 & 唯一分解 \\
+\hline
+$\Z$ & $N(a)=|a|$ & $\gcd$ 与 Bézout & 算术基本定理 \\
+$F[x]$ & $N(f)=\deg f$ & 多项式 Bézout & 多项式唯一分解 \\
+$\Ga$ & $N(a+bi)=a^2+b^2$ & 高斯 $\gcd$ & 二平方和定理 \\
+\hline
+\end{tabular}
+\end{center}
+
+群论一侧同样一条链：\textbf{Lagrange 定理 $\Rightarrow$ 元素的阶整除群的阶 $\Rightarrow$ Euler--Fermat、Wilson}；再加“有限域中 $d$ 次多项式至多 $d$ 个根”，便得乘法群循环与原根理论。中国剩余定理则统一了“互素”概念：$I+J=R$ 时，联立同余可拆解、商环可拆积。
+
+\subsection{$\Z[\sqrt{-5}]$ 与理想的诞生}
+
+第三章的例~\ref{ex:zs5} 值得再看一眼：$\Gf$ 中
+\[
+6=2\cdot3=(1+\sqrt{-5})(1-\sqrt{-5})
+\]
+是两个本质不同的不可约分解。这不是病态例外，而是历史的转折点。19 世纪，Kummer 在研究 Fermat 大定理时发现分圆整数环中唯一分解普遍失效；Dedekind 的对策是\textbf{不再分解元素，而分解理想}。在 $\Gf$ 中令
+\[
+\mathfrak p=(2,\,1+\sqrt{-5}),\qquad
+\mathfrak q=(3,\,1+\sqrt{-5}),\qquad
+\mathfrak q'=(3,\,1-\sqrt{-5}),
+\]
+可以验证（用生成元的组合，见习题~\ref{ex:9-2}）
+\[
+(2)=\mathfrak p^2,\qquad (3)=\mathfrak q\,\mathfrak q',\qquad
+(1+\sqrt{-5})=\mathfrak p\,\mathfrak q,\qquad
+(1-\sqrt{-5})=\mathfrak p\,\mathfrak q' ,
+\]
+于是 $6$ 的两种元素分解都对应\textbf{同一个}理想分解
+\[
+(6)=\mathfrak p^2\,\mathfrak q\,\mathfrak q' .
+\]
+Dedekind 证明了：在（今称）\textbf{Dedekind 整环}中，每个非零理想唯一地分解为素理想之积。唯一性没有消失，只是搬了家：从元素层面搬到理想层面。
+
+数论代数由此生长为代数数论：整数环 $\Z$ 推广为数域的代数整数环 $\mathcal O_K$，素数推广为素理想，$\varphi$ 推广为理想类数与 Zeta 函数，二次互反律推广为 Artin 互反律；而理想类群的大小（类数）恰好度量了“唯一分解失效的程度”——$\Z$ 与 $\Ga$ 的类数为 $1$，故唯一分解成立；$\Gf$ 的类数为 $2$，故出现例~\ref{ex:zs5} 的双重分解。Kummer 正是用这套工具处理了正则素数情形的 Fermat 大定理；Wiles 的最终证明（1995）则使用椭圆曲线与模形式的 Galois 表示——仍是“用结构理解数”的同一哲学。
+
+\subsection{进一步阅读}
+
+\begin{itemize}[itemsep=0.15em]
+  \item 潘承洞、潘承彪：《初等数论》——传统路线的完备参照，可与本讲义对照阅读。
+  \item 丘维声：《抽象代数基础》；或 Hungerford, \emph{Algebra}，第 III 章——环论细节（Noether 性、UFD 判据）。
+  \item Ireland \& Rosen, \emph{A Classical Introduction to Modern Number Theory}——本讲义风格的最佳延伸：二次互反律的多个证明、高斯和、有限域上的数论。
+  \item Stewart \& Tall, \emph{Algebraic Number Theory and Fermat's Last Theorem}——第九章后记的完整展开。
+  \item Cox, \emph{Primes of the Form $x^2+ny^2$}——二平方和定理的近代推广（类域论视角）。
+\end{itemize}
+
+\begin{exercise}\label{ex:9-1}
+写出本讲义的“依赖地图”：对下列每个定理，指出它依赖的更基本定理（Lagrange、Euler 判据、CRT、ED$\Rightarrow$PID、PID$\Rightarrow$UFD、$\Ga$ 欧几里得性等），并检查有无循环论证。
+\end{exercise}
+
+\begin{exercise}\label{ex:9-2}
+验证 \S\ref{sec:conclusion} 中 $\mathfrak p^2=(2)$ 与 $\mathfrak q\mathfrak q'=(3)$：把乘积理想写成生成元组合的形式，证明 $\mathfrak p^2\subseteq(2)$ 与 $2\in\mathfrak p^2$（提示：$(1+\sqrt{-5})^2=-4+2\sqrt{-5}$；$(1+\sqrt{-5})-( -2+\sqrt{-5})=3$ 之类的组合）。
+\end{exercise}
+
+\begin{exercise}\label{ex:9-3}
+证明 $\Gf$ 中理想 $\mathfrak p=(2,1+\sqrt{-5})$ 不是主理想。（提示：若 $\mathfrak p=(\alpha)$，则 $\alpha\mid 2$，用范数讨论 $N(\alpha)\in\{2,4\}$ 的可能性；$a^2+5b^2=2$ 无解。）
+\end{exercise}
+
+\begin{exercise}[\textbf{挑战}]\label{ex:9-4}
+证明存在无穷多个素数 $p\equiv1\pmod4$。（提示：仿照习题~\ref{ex:3-5} 的框架：设 $p_1,\dots,p_k$ 是全部这样的素数，考察 $N=(2p_1\cdots p_k)^2+1$。$N$ 的任何素因子 $r$ 满足 $(2p_1\cdots p_k)^2\equiv-1\pmod r$，用推论~\ref{cor:negone} 排除 $r\equiv3\pmod4$；再用 $p_i\mid N-1$ 排除 $r\in\{p_1,\dots,p_k\}$。这是“Euler 判据 $\Rightarrow$ 二平方和 $\Rightarrow$ 素数分布”的一条完整闭环。）
+\end{exercise}
+
+\end{document}
