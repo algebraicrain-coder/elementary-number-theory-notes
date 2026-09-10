@@ -1,0 +1,128 @@
+% !TEX program = xelatex
+% 抽象代数视角下的初等数论讲义
+% 编译方式：xelatex（需编译两遍以生成目录与交叉引用）
+\documentclass[a4paper,11pt]{ctexart}
+
+% ---- 数学与符号 ----
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\allowdisplaybreaks
+\numberwithin{equation}{section}
+
+% ---- 页面布局 ----
+\usepackage[top=2.2cm,bottom=2.2cm,left=2.8cm,right=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---- 页眉页脚 ----
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\setlength{\headheight}{14.5pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\rightmark}
+\fancyfoot[C]{\thepage~/~\pageref{LastPage}}
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[C]{\thepage~/~\pageref{LastPage}}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+% ---- 颜色与超链接 ----
+\usepackage{xcolor}
+\usepackage[colorlinks=true, allcolors=blue!45!black]{hyperref}
+
+% ---- 列表 ----
+\usepackage{enumitem}
+
+% ---- 定理环境：编号跟随 section ----
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{notation}[theorem]{Notation}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{exercise}{习题}[section]
+
+\renewcommand{\proofname}{Proof}
+
+% ---- 自定义记号 ----
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\N}{\mathbb{N}}
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator{\Img}{Im}
+\newcommand{\leg}[2]{\left(\frac{#1}{#2}\right)}
+\newcommand{\Ga}{\mathbb{Z}[i]}
+\newcommand{\Gf}{\mathbb{Z}[\sqrt{-5}]}
+
+\title{初等数论}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\setcounter{section}{-1}
+
+\section{前言}
+
+本文主要参考张贤科《初等数论》，并参考若干网络资料。
+
+限于篇幅和主题，本文不从公理开始定义自然数、自然数的序和自然数的运算；下文直接使用通常的自然数、序、加法、乘法等概念。本文约定自然数包含 \(0\)。
+
+\begin{notation}
+    记全体整数为 \(\Z\)，全体自然数为 \(\N\)。
+\end{notation}
+
+下面不加证明地给出本文采用的自然数基本性质。
+
+\begin{theorem}[数学归纳法]
+    设 \(P\) 是 \(\N\) 上的一元谓词。若 \(P(0)\) 为真，且对任意自然数 \(n\)，\(P(n)\) 蕴含 \(P(n+1)\)，则对任意自然数 \(n\)，\(P(n)\) 为真。换言之，
+    \[
+    \bigl(P(0)\land \forall n(P(n)\to P(n+1))\bigr)
+    \to \forall nP(n). 
+    \]
+\end{theorem}
+
+\begin{corollary}[自然数良序]
+    自然数的任何非空子集都有最小元。
+\end{corollary}
+
+由自然数的基本运算性质可得：
+
+\begin{proposition}
+    自然数关于加法构成交换幺半群，\(0\) 为加法幺元；关于乘法构成交换幺半群，\(1\) 为乘法幺元；乘法对加法满足分配律。因此 \((\N,+,\cdot,0,1)\) 构成交换半环。
+\end{proposition}
+
+网站 \url{https://adam.math.hhu.de/#/g/leanprover-community/nng4} 将这些命题的证明做成了分步游戏，感兴趣的读者可以自行探索。下文将不加证明地大量使用加法、乘法、幂运算的基本性质。
+
+\begin{proposition}
+    整数集 \(\Z\) 关于加法和乘法构成交换环 \((\Z,+,\cdot,0,1)\)，事实上是整环（没有非平凡零因子）。\(\Z\) 的乘法可逆元只有 \(\Z^\times=\{\pm1\}\)。
+\end{proposition}
+
+这里同样不给出证明。下文将进一步证明，\(\Z\) 是欧几里得整环，从而是主理想整环和唯一分解整环。
+
+另外，由于存在保持加法和乘法的嵌入 \(\N \hookrightarrow \Z \hookrightarrow \Q \hookrightarrow \R \hookrightarrow \C\)，这里将结构在嵌入下的像直接作为结构本身，从而可以声称 \(\N \subseteq \Z \subseteq \Q \subseteq \R \subseteq \C\)。
+
+
+
+
+
+
+
+\end{document}
